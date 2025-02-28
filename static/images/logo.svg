@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="90" fill="#3498db" />
+  
+  <!-- Binary bits representation -->
+  <text x="70" y="75" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="white">01</text>
+  <text x="110" y="75" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="white">10</text>
+  <text x="70" y="105" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="white">10</text>
+  <text x="110" y="105" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="white">01</text>
+  
+  <!-- Tool icon (wrench) -->
+  <path d="M130,140 L110,120 C115,115 115,105 110,100 C105,95 95,95 90,100 L70,80 C75,70 75,55 65,45 C55,35 40,35 30,45 L50,65 C50,70 45,75 40,75 C35,75 30,70 30,65 L10,85 C0,95 0,110 10,120 C20,130 35,130 45,120 L65,140 C60,145 60,155 65,160 C70,165 80,165 85,160 L105,180 C115,190 130,190 140,180 C150,170 150,155 140,145 L130,140 Z" fill="white" />
+  
+  <!-- Text -->
+  <text x="100" y="180" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="white" text-anchor="middle">bit-tools</text>
+</svg>

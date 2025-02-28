@@ -13,6 +13,7 @@ def header(current_page="/"):
     # Define the navigation links
     nav_items = [
         ("Home", "/"),
+        ("Tools", "/tools"),  # Added Tools link
         ("About", "/about"),
         ("Contact", "/contact")
     ]
@@ -21,7 +22,9 @@ def header(current_page="/"):
     nav_links = []
     for title, path in nav_items:
         # Apply special styling to the current page link
-        is_current = current_page == path
+        is_current = current_page == path or (
+            current_page.startswith("/tools/") and path == "/tools"
+        )
         link_class = "text-white hover:text-gray-300 px-3 py-2"
         if is_current:
             link_class += " font-bold underline"
@@ -35,7 +38,7 @@ def header(current_page="/"):
     return Header(
         Div(
             # Website logo/name
-            A("bit-tools.com", href="/", cls="text-xl font-bold text-white"),
+            A("Bit Tools", href="/", cls="text-xl font-bold text-white"),
 
             # Navigation menu
             Nav(
@@ -51,66 +54,48 @@ def header(current_page="/"):
     )
 
 def footer():
-    """
-    Creates a consistent footer for all pages.
-
-    Returns:
-        A Footer component with copyright and links
-    """
-    current_year = 2025  # In a real app, use datetime to get current year
-
+    """Creates a consistent footer."""
     return Footer(
         Div(
-            Div(
-                P(f"© {current_year} bit-tools.com. All rights reserved.",
-                  cls="text-gray-500"),
-                cls="mb-4"
-            ),
-            Div(
-                A("Privacy Policy", href="#", cls="text-blue-500 hover:underline mr-4"),
-                A("Terms of Service", href="#", cls="text-blue-500 hover:underline"),
-                cls="text-sm"
-            ),
-            cls="container mx-auto px-4 py-6 text-center"
+            P("© 2023 Bit Tools. All rights reserved.", cls="text-center text-gray-500"),
+            cls="container mx-auto px-4 py-6"
         ),
-        cls="bg-gray-100 mt-8"
+        cls="bg-gray-100 mt-auto"
     )
 
 def page_layout(title, content, current_page="/"):
     """
-    Wraps page content with consistent header, footer, and styling.
-
+    Creates a consistent page layout with header and footer.
+    
     Args:
-        title: The page title (appears in browser tab)
-        content: The main content of the page
-        current_page: The current page path for navigation highlighting
-
+        title: The page title
+        content: The main content components
+        current_page: The current page path
+        
     Returns:
-        A complete HTML page with header, content, and footer
+        A complete HTML page
     """
     return Html(
         Head(
             Title(title),
-            # Meta tags for better SEO and mobile display
+            Meta(charset="UTF-8"),
             Meta(name="viewport", content="width=device-width, initial-scale=1.0"),
-            Meta(name="description", content=f"{title} - MyWebsite built with FastHTML"),
-            # Include Tailwind CSS for styling
-            Script(src="https://cdn.tailwindcss.com")
+            Script(src="https://cdn.tailwindcss.com"),
+            # Added analytics script
+            Script(defer=True, **{"data-domain": "bit-tools.com", "src": "https://an.bitdoze.com/js/script.js"}),
         ),
         Body(
-            # Include header with current page highlighted
-            header(current_page),
-
-            # Main content area
-            Main(
-                Div(
-                    content,
-                    cls="container mx-auto px-4 py-8"
+            Div(
+                header(current_page),
+                Main(
+                    Div(
+                        content,
+                        cls="container mx-auto px-4 py-8"
+                    ),
+                    cls="flex-grow"
                 ),
-                cls="min-h-screen"  # Ensures footer stays at bottom
-            ),
-
-            # Include footer
-            footer()
+                footer(),
+                cls="flex flex-col min-h-screen"
+            )
         )
     )

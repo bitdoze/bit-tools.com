@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <!-- Background circle -->
+  <circle cx="16" cy="16" r="15" fill="#3498db" />
+  
+  <!-- Binary bits simplified -->
+  <text x="11" y="12" font-family="Arial, sans-serif" font-size="4" font-weight="bold" fill="white">01</text>
+  <text x="17" y="12" font-family="Arial, sans-serif" font-size="4" font-weight="bold" fill="white">10</text>
+  <text x="11" y="17" font-family="Arial, sans-serif" font-size="4" font-weight="bold" fill="white">10</text>
+  <text x="17" y="17" font-family="Arial, sans-serif" font-size="4" font-weight="bold" fill="white">01</text>
+  
+  <!-- Tool icon (wrench) simplified -->
+  <path d="M21,22 L18,19 C19,18 19,17 18,16 C17,15 16,15 15,16 L12,13 C13,11 13,9 11,7 C9,5 7,5 5,7 L8,10 C8,11 7,12 6,12 C5,12 4,11 4,10 L1,13 C0,14 0,16 1,17 C2,18 4,18 5,17 L8,20 C7,21 7,22 8,23 C9,24 10,24 11,23 L14,26 C15,27 17,27 18,26 C19,25 19,23 18,22 L21,22 Z" fill="white" />
+</svg>
