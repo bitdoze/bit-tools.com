@@ -1,4 +1,7 @@
 from fasthtml.common import *
+from fasthtml.components import NotStr
+from tools import get_all_tools
+from component.social_icons import social_icons
 
 def home():
     """
@@ -7,52 +10,62 @@ def home():
     Returns:
         Components representing the home page content
     """
+    # Get tools for display
+    tools_list = get_all_tools()
+    
     return Div(
-        # Hero section
+        # Hero section with social icons
         Div(
-            H1("Welcome to bit-tools.com",
-               cls="text-4xl font-bold text-gray-800 mb-4"),
-            P("Build beautiful web applications with FastHTML and Python.",
-              cls="text-xl text-gray-600 mb-6"),
             Div(
-                A("Get Started",
-                  href="/about",
-                  cls="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-4"),
-                A("Learn More",
-                  href="/contact",
-                  cls="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded"),
-                cls="flex"
+                Div(
+                    H1(
+                        "Welcome to ",
+                        Span("Bit Tools", 
+                             cls="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-500 sm:whitespace-nowrap"),
+                        cls="text-5xl md:text-[3.50rem] font-bold leading-tighter tracking-tighter mb-4 font-heading"
+                    ),
+                    Div(
+                        P("Create engaging content with our AI-powered tools.",
+                          cls="text-xl text-gray-600 mb-8"),
+                        cls="max-w-3xl mx-auto"
+                    ),
+                    # Use the social icons component
+                    social_icons(),
+                    cls="text-center pb-10 md:pb-16"
+                ),
+                cls="py-12 md:py-20"
             ),
-            cls="py-12 text-center"
+            cls="max-w-6xl mx-auto px-4 sm:px-6"
         ),
 
-        # Features section
+        # Tools section (replacing Key Features)
         Div(
-            H2("Key Features", cls="text-3xl font-bold text-center mb-8"),
+            H2("Our Tools", cls="text-3xl font-bold text-center mb-8"),
             Div(
-                # Feature 1
-                Div(
-                    H3("Easy to Learn", cls="text-xl font-semibold mb-2"),
-                    P("Built on Python, making web development accessible to everyone.",
-                      cls="text-gray-600"),
-                    cls="bg-white p-6 rounded-lg shadow-md"
-                ),
-                # Feature 2
-                Div(
-                    H3("Highly Productive", cls="text-xl font-semibold mb-2"),
-                    P("Create web applications faster with fewer lines of code.",
-                      cls="text-gray-600"),
-                    cls="bg-white p-6 rounded-lg shadow-md"
-                ),
-                # Feature 3
-                Div(
-                    H3("Scalable", cls="text-xl font-semibold mb-2"),
-                    P("Easily expand your application as your needs grow.",
-                      cls="text-gray-600"),
-                    cls="bg-white p-6 rounded-lg shadow-md"
-                ),
-                cls="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
+                *[
+                    Div(
+                        Div(
+                            Div(
+                                NotStr(tool.icon),
+                                cls="text-blue-600 w-12 h-12 mr-4"
+                            ),
+                            Div(
+                                H3(tool.name, cls="text-xl font-semibold mb-2"),
+                                P(tool.description, cls="text-gray-600"),
+                                cls="flex-1"
+                            ),
+                            cls="flex items-start"
+                        ),
+                        A("Try it now →", 
+                          href=tool.route,
+                          cls="mt-4 inline-block text-blue-600 hover:text-blue-800 font-medium"),
+                        cls="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
+                    )
+                    for tool in tools_list
+                ],
+                cls="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12"
             ),
-            cls="py-8"
-        )
+            cls="py-8 max-w-6xl mx-auto px-4 sm:px-6"
+        ),
+        cls="relative overflow-hidden"  # Moved this to be the last argument of the outer Div
     )

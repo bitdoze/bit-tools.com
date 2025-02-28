@@ -1,44 +1,40 @@
 from fasthtml.common import *
+from fasthtml.components import NotStr  # Changed from Raw to NotStr
 from tools import get_all_tools
 
 def tools():
-    """
-    Defines the tools overview page.
+    """Generate the tools listing page."""
+    tools_list = get_all_tools()
     
-    Returns:
-        Components representing the tools page content
-    """
-    # Get all registered tools
-    all_tools = get_all_tools()
-    
-    # Create tool cards
     tool_cards = []
-    for tool in all_tools:
+    for tool in tools_list:
         tool_cards.append(
-            Div(
+            A(
                 Div(
-                    H2(tool.name, cls="text-2xl font-semibold mb-2"),
-                    P(tool.description, cls="text-gray-600 mb-4"),
-                    A("Use Tool",
-                      href=tool.route,
-                      cls="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"),
-                    cls="p-6"
+                    # Tool icon - using NotStr for SVG rendering
+                    Div(
+                        NotStr(tool.icon),  # Changed from Raw to NotStr
+                        cls="text-blue-600 mb-4"
+                    ),
+                    H2(tool.name, 
+                       cls="text-xl font-bold text-gray-800 mb-2"),
+                    P(tool.description,
+                      cls="text-gray-600"),
+                    cls="p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
                 ),
-                cls="bg-white rounded-lg shadow-md transition-transform hover:scale-105"
+                href=tool.route,
+                cls="block"
             )
         )
     
     return Div(
-        # Page header
         H1("AI Tools",
-           cls="text-3xl font-bold text-gray-800 mb-6 text-center"),
-           
-        P("Explore our collection of AI-powered tools to help with your creative and productivity needs.",
-          cls="text-xl text-gray-600 mb-8 text-center"),
-        
-        # Tools grid
+           cls="text-3xl font-bold text-gray-800 mb-8 text-center"),
+        P("Enhance your content creation with our AI-powered tools.",
+          cls="text-xl text-gray-600 mb-12 text-center"),
         Div(
             *tool_cards,
-            cls="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-        )
+            cls="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        ),
+        cls="container mx-auto px-4 py-8"
     )

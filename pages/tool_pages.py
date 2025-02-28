@@ -1,4 +1,5 @@
 from fasthtml.common import *
+from fasthtml.components import NotStr  # Add this import for NotStr component
 from tools import get_tool_by_id
 
 def create_form_field(field_id, field_config):
@@ -90,7 +91,11 @@ def tool_page(tool_id):
     )
     
     return Div(
-        # Page header
+        # Page header with icon
+        Div(
+            NotStr(tool.icon),  # Changed from Raw to NotStr
+            cls="text-blue-600 w-16 h-16 mx-auto mb-4"
+        ),
         H1(tool.name,
            cls="text-3xl font-bold text-gray-800 mb-2 text-center"),
            
