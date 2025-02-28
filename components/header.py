@@ -72,11 +72,7 @@ def header(current_page="/"):
 
     return Header(
         Div(
-            A(
-                NotStr(logo_svg),  # Use NotStr to prevent HTML escaping
-                href="/",
-                cls="flex items-center"
-            ),
+              A("Bit Tools", href="/", cls="text-xl font-bold text-white"),
             Nav(
                 Ul(
                     *nav_links,
