@@ -9,7 +9,7 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 # Default model to use
-DEFAULT_MODEL = "anthropic/claude-3.7-sonnet"
+DEFAULT_MODEL = os.getenv("DEFAULT_MODEL")
 
 # Application settings
 DEBUG = True

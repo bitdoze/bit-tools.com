@@ -14,26 +14,7 @@ from tools import get_all_tools, get_tool_by_id
 from components import page_layout
 
 # Initialize the FastHTML application with Pico CSS enabled
-app, rt = fast_app(
-    pico=True,  # Enable Pico CSS
-    hdrs=(
-        Link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css"),
-        Style("""
-            :root {
-                --primary: #1095c1;
-                --primary-hover: #0a6d8e;
-            }
-            .container {
-                margin: 0 auto;
-                padding: 0 20px;
-                max-width: 1200px;
-            }
-            .text-center {
-                text-align: center;
-            }
-        """)
-    )
-)
+app = FastHTML()
 
 @app.get("/")
 def home():
@@ -63,13 +44,14 @@ def contact():
 @app.post("/submit-contact")
 def submit_contact(name: str, email: str, message: str):
     """Handler for contact form submission."""
-    acknowledgment = Container(
-        Card(
-            H1("Thank You!"),
-            P(f"Hello {name}, we've received your message and will respond to {email} soon."),
-            A("Return Home", href="/", role="button")
-        )
-    )
+    acknowledgment = Div(
+        Div(
+            H1("Thank You!", cls="text-2xl font-bold mb-4"),
+            P(f"Hello {name}, we've received your message and will respond to {email} soon.", cls="mb-4"),
+            A("Return Home", href="/", cls="inline-block px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600")
+        , cls="bg-white p-6 rounded-lg shadow-md")
+    , cls="max-w-md mx-auto")
+    
     return page_layout(
         title="Thank You - Bit Tools",
         content=acknowledgment,
@@ -88,13 +70,14 @@ def tools():
 def tool_page_handler(tool_id: str):
     tool = get_tool_by_id(tool_id)
     if not tool:
-        error_content = Container(
-            Card(
-                H1("Tool Not Found"),
-                P("Sorry, the requested tool could not be found."),
-                A("Back to Tools", href="/tools", role="button")
-            )
-        )
+        error_content = Div(
+            Div(
+                H1("Tool Not Found", cls="text-2xl font-bold mb-4"),
+                P("Sorry, the requested tool could not be found.", cls="mb-4"),
+                A("Back to Tools", href="/tools", cls="inline-block px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600")
+            , cls="bg-white p-6 rounded-lg shadow-md")
+        , cls="max-w-md mx-auto")
+        
         return page_layout(
             title="Tool Not Found - Bit Tools",
             content=error_content,
@@ -109,13 +92,14 @@ def tool_page_handler(tool_id: str):
 
 @app.get("/{path:path}")
 def not_found(path: str):
-    error_content = Container(
-        Card(
-            H1("404 - Page Not Found"),
-            P(f"Sorry, the page '/{path}' does not exist."),
-            A("Return Home", href="/", role="button")
-        )
-    )
+    error_content = Div(
+        Div(
+            H1("404 - Page Not Found", cls="text-2xl font-bold mb-4"),
+            P(f"Sorry, the page '/{path}' does not exist.", cls="mb-4"),
+            A("Return Home", href="/", cls="inline-block px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600")
+        , cls="bg-white p-6 rounded-lg shadow-md")
+    , cls="max-w-md mx-auto")
+    
     return page_layout(
         title="404 Not Found - Bit Tools",
         content=error_content,
@@ -127,12 +111,13 @@ async def process_tool(tool_id: str, request):
     """Handler for tool form submission."""
     tool = get_tool_by_id(tool_id)
     if not tool:
-        error_content = Article(
-            H1("Tool Not Found"),
-            P("Sorry, the requested tool could not be found."),
-            A("Back to Tools", href="/tools", role="button"),
-            cls="container text-center"
+        error_content = Div(
+            H1("Tool Not Found", cls="text-2xl font-bold mb-4"),
+            P("Sorry, the requested tool could not be found.", cls="mb-4"),
+            A("Back to Tools", href="/tools", cls="inline-block px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"),
+            cls="container mx-auto max-w-md bg-white p-6 rounded-lg shadow-md text-center"
         )
+        
         return page_layout(
             title="Tool Not Found - Bit Tools",
             content=error_content,
@@ -150,12 +135,13 @@ async def process_tool(tool_id: str, request):
             current_page=f"/tools/{tool_id}"
         )
     except Exception as e:
-        error_content = Article(
-            H1("Processing Error"),
-            P(f"An error occurred while processing your request: {str(e)}"),
-            A("Try Again", href=f"/tools/{tool_id}", role="button"),
-            cls="container text-center"
+        error_content = Div(
+            H1("Processing Error", cls="text-2xl font-bold mb-4"),
+            P(f"An error occurred while processing your request: {str(e)}", cls="mb-4"),
+            A("Try Again", href=f"/tools/{tool_id}", cls="inline-block px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"),
+            cls="container mx-auto max-w-md bg-white p-6 rounded-lg shadow-md text-center"
         )
+        
         return page_layout(
             title="Error - Bit Tools",
             content=error_content,
