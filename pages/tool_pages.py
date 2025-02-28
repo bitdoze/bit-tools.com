@@ -219,7 +219,8 @@ def tool_results_page(tool_id, results):
                         Button(
                             "Copy",
                             type="button",
-                            onclick=f"copyText('{title.replace('\'', '\\\'').replace('\"', '\\\"').replace('\n', ' ')}')",
+                            # Fixed backslash handling in the f-string
+                            onclick=f"copyText({repr(title)})",
                             cls="text-sm bg-gray-200 hover:bg-gray-300 text-gray-800 py-1 px-2 rounded ml-2"
                         ),
                         cls="flex items-center justify-between p-3 bg-white rounded shadow-sm mb-3 hover:shadow-md transition-shadow"
