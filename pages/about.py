@@ -1,5 +1,5 @@
 from fasthtml.common import *
-from component.social_icons import social_icons
+from components.social_icons import social_icons
 def about():
     """
     Defines the about page content.

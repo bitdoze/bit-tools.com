@@ -1,7 +1,7 @@
 from fasthtml.common import *
 from fasthtml.components import NotStr
 from tools import get_all_tools
-from component.social_icons import social_icons
+from components.social_icons import social_icons
 
 def home():
     """

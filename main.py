@@ -11,7 +11,7 @@ from pages.tool_pages import tool_page, tool_results_page
 from tools import get_all_tools, get_tool_by_id
 
 # Import the page layout component
-from components import page_layout
+from components.page_layout import page_layout  # Update this line
 
 # Initialize the FastHTML application with Pico CSS enabled
 app = FastHTML()
