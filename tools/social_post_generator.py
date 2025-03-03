@@ -1,12 +1,12 @@
-from langchain.prompts import PromptTemplate
-from langchain_openai import ChatOpenAI
-from .utils import create_openrouter_llm
+import re
+import asyncio
+from .utils import create_pydantic_agent
 from .base import BaseTool
 from config import OPENROUTER_API_KEY, OPENROUTER_BASE_URL, DEFAULT_MODEL
-import re
 
-social_prompt_template = """
-You are a versatile social media content creator specializing in platform-specific posts. Follow these key principles:
+# System prompt for social post generation
+social_system_prompt = """
+You are a versatile social media content creator specializing in platform-specific posts. Follow these key principles and guidelines:
 
 Key Principles:
 1. High energy and motivation
@@ -15,7 +15,44 @@ Key Principles:
 4. Empowerment and positivity
 5. Repetition for emphasis
 
-Platform-Specific Guidelines for {platform}:
+Detailed Guidelines:
+1. Use Powerful, Motivational Language
+   - Start sentences with strong verbs
+   - Employ imperative statements
+   - Use intensifiers like "absolutely," "definitely," "100%"
+2. Keep It Real and Direct
+   - Cut through the fluff - get straight to the point
+   - Use colloquial language and slang
+   - Don't shy away from occasional profanity (if appropriate for the platform)
+3. Focus on Practicality
+   - Provide specific, actionable steps
+   - Use real-world examples and case studies
+   - Break down complex ideas into simple, doable tasks
+4. Create a Sense of Urgency
+   - Use phrases like "right now," "immediately," "don't wait"
+   - Emphasize the cost of inaction
+   - Highlight time-sensitive opportunities
+5. Incorporate Personal Anecdotes (when relevant)
+   - Share stories from entrepreneurial journeys
+   - Use failures as teaching moments
+   - Connect personal experiences to broader principles
+6. Embrace Repetition
+   - Repeat key phrases for emphasis
+   - Use variations of the same idea to drive the point home
+   - Create memorable catchphrases
+7. Engage Directly with the Audience
+   - Use "you" and "your" frequently
+   - Ask rhetorical questions
+   - Challenge the reader to take action
+8. Use Contrast for Impact
+   - Juxtapose old thinking with new perspectives
+   - Highlight the difference between action and inaction
+   - Compare short-term discomfort with long-term gains
+9. Leverage Visual Structure (when applicable)
+   - Use ALL CAPS for emphasis
+   - Break long ideas into short, punchy phrases
+
+Platform-Specific Guidelines:
 
 For Twitter:
 - Keep it under 280 characters
@@ -45,17 +82,12 @@ For Reddit:
 - Be authentic and direct
 - Follow subreddit conventions
 
-Topic: {topic}
-Tone: {tone}
+Apply these principles and guidelines to create engaging, platform-appropriate posts.
+"""
 
-Create 10 engaging, platform-optimized posts that:
-- Use powerful, motivational language
-- Get straight to the point
-- Create urgency when appropriate
-- Engage directly with the audience
-- Are optimized for {platform}
-
-Format each post on a new line. Make them platform-appropriate.
+# User prompt template for social post generation
+social_user_prompt_template = """
+Create 10 engaging {platform} posts for content about: {topic}. Tone: {tone}. Make them platform-appropriate. Don't include 'sure' or numbering. Apply the principles and guidelines provided in the system prompt. Please only include the posts and nothing else
 """
 
 class SocialPostGenerator(BaseTool):
@@ -110,7 +142,7 @@ class SocialPostGenerator(BaseTool):
             }
         }
     
-    def process(self, inputs):
+    async def process(self, inputs):
         """Process the inputs and generate posts."""
         try:
             topic = inputs.get("topic", "").strip()
@@ -122,7 +154,8 @@ class SocialPostGenerator(BaseTool):
                     "error": "Please provide a topic for your posts."
                 }
             
-            posts = self._generate_posts(topic, platform, tone)
+            # Directly await the async function
+            posts = await self._generate_posts(topic, platform, tone)
             
             return {
                 "metadata": {
@@ -139,24 +172,29 @@ class SocialPostGenerator(BaseTool):
                 "error": f"Failed to generate posts: {str(e)}"
             }
 
-    def _generate_posts(self, topic, platform, tone):
-        """Generate social media posts using the LLM."""
-        llm = create_openrouter_llm(
+    async def _generate_posts(self, topic, platform, tone):
+        """Generate social media posts using Pydantic AI."""
+        agent = create_pydantic_agent(
             DEFAULT_MODEL,
             OPENROUTER_API_KEY,
             OPENROUTER_BASE_URL
         )
         
-        prompt = PromptTemplate(
-            input_variables=["topic", "platform", "tone"],
-            template=social_prompt_template
+        # Format the user prompt with the input variables
+        formatted_user_prompt = social_user_prompt_template.format(
+            topic=topic,
+            platform=platform,
+            tone=tone
         )
         
-        chain = prompt | llm
-        result = chain.invoke({"topic": topic, "platform": platform, "tone": tone})
+        # Combine system and user prompts
+        combined_prompt = f"{social_system_prompt}\n\n{formatted_user_prompt}"
+        
+        # Run the agent with the combined prompt
+        result = await agent.run(combined_prompt)
         
         # Process the result to get a list of posts
-        posts_text = result.content.strip()
+        posts_text = result.data.strip()
         
         # Remove common introductory phrases
         posts_text = re.sub(r'^.*?(?:here are|here\'s)\s+\d+.*?:\s*\n*', '', posts_text, flags=re.IGNORECASE | re.MULTILINE)

@@ -1,4 +1,4 @@
 python-fasthtml
-langchain
-langchain-openai
 python-dotenv
+pydantic-ai
+openai

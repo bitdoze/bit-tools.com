@@ -127,7 +127,7 @@ async def process_tool(tool_id: str, request):
     try:
         form_data = await request.form()
         inputs = {key: value for key, value in form_data.items()}
-        results = tool.process(inputs)
+        results = await tool.process(inputs)
         
         return page_layout(
             title=f"{tool.name} Results - Bit Tools",

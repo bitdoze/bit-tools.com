@@ -40,7 +40,7 @@ class BaseTool(ABC):
         return f"/tools/{self.id}"
     
     @abstractmethod
-    def process(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    async def process(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """
         Process the inputs and return the results.
         

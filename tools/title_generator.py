@@ -1,14 +1,12 @@
-from langchain.prompts import PromptTemplate
-from langchain_openai import ChatOpenAI
-from .utils import create_openrouter_llm
+import re
+import asyncio
+from .utils import create_pydantic_agent
 from .base import BaseTool
 from config import OPENROUTER_API_KEY, OPENROUTER_BASE_URL, DEFAULT_MODEL
-import re
 
-# Create a prompt template for generating titles
-# Updated prompt template with better guidelines
-title_prompt_template = """
-You are a versatile content title generator specializing in catchy, platform-specific titles. Follow these key principles:
+# System prompt for title generation
+title_system_prompt = """
+You are a versatile content title generator specializing in catchy, platform-specific titles. Follow these key principles and guidelines:
 
 Key Principles:
 1. High energy and motivation
@@ -17,40 +15,49 @@ Key Principles:
 4. Empowerment and positivity
 5. Repetition for emphasis
 
-Platform-Specific Guidelines for {platform}:
+Detailed Guidelines:
+1. Use Powerful, Motivational Language
+   - Start sentences with strong verbs
+   - Employ imperative statements
+   - Use intensifiers like "absolutely," "definitely," "100%"
+2. Keep It Real and Direct
+   - Cut through the fluff - get straight to the point
+   - Use colloquial language and slang
+   - Don't shy away from occasional profanity (if appropriate for the platform)
+3. Focus on Practicality
+   - Provide specific, actionable steps
+   - Use real-world examples and case studies
+   - Break down complex ideas into simple, doable tasks
+4. Create a Sense of Urgency
+   - Use phrases like "right now," "immediately," "don't wait"
+   - Emphasize the cost of inaction
+   - Highlight time-sensitive opportunities
+5. Incorporate Personal Anecdotes (when relevant)
+   - Share stories from entrepreneurial journeys
+   - Use failures as teaching moments
+   - Connect personal experiences to broader principles
+6. Embrace Repetition
+   - Repeat key phrases for emphasis
+   - Use variations of the same idea to drive the point home
+   - Create memorable catchphrases
+7. Engage Directly with the Audience
+   - Use "you" and "your" frequently
+   - Ask rhetorical questions
+   - Challenge the reader to take action
+8. Use Contrast for Impact
+   - Juxtapose old thinking with new perspectives
+   - Highlight the difference between action and inaction
+   - Compare short-term discomfort with long-term gains
+9. Leverage Visual Structure (when applicable)
+   - Use ALL CAPS for emphasis
+   - Break long ideas into short, punchy phrases
 
-For YouTube:
-- Use powerful, motivational language
-- Create urgency ("Must Watch", "Do This Now")
-- Include numbers and specific outcomes
-- Use emotional triggers and curiosity gaps
-- Focus on searchability and click-through
+Apply these principles and guidelines to create engaging, platform-appropriate titles.
+"""
 
-For Article:
-- Start with strong verbs
-- Use "How to" and "Why" formats
-- Include specific benefits
-- Focus on SEO-friendly keywords
-- Consider using subtitles or colons
-
-For TikTok:
-- Keep it short and punchy
-- Use trending phrases
-- Include relevant emojis
-- Add popular hashtags
-- Make it memorable and shareable
-
-Topic: {topic}
-Style: {style}
-
-Create 10 engaging, high-impact titles that:
-- Use powerful, motivational language
-- Get straight to the point
-- Create urgency when appropriate
-- Engage directly with the audience
-- Are optimized for {platform}
-
-Format each title on a new line. Make them catchy and platform-appropriate.
+# User prompt template for title generation
+title_user_prompt_template = """
+Create 10 engaging {platform} titles for content about: {topic}. Tone: {style}. Make them catchy and platform-appropriate. Don't include 'sure' or numbering. Apply the principles and guidelines provided in the system prompt. Please only include the titles and nothing else
 """
 
 class TitleGenerator(BaseTool):
@@ -99,7 +106,7 @@ class TitleGenerator(BaseTool):
             }
         }
     
-    def process(self, inputs):
+    async def process(self, inputs):
         """Process the inputs and generate titles."""
         try:
             topic = inputs.get("topic", "").strip()
@@ -111,7 +118,8 @@ class TitleGenerator(BaseTool):
                     "error": "Please provide a topic for your titles."
                 }
             
-            titles = self._generate_titles(topic, platform, style)
+            # Directly await the async function
+            titles = await self._generate_titles(topic, platform, style)
             
             # Group titles by category for better presentation
             return {
@@ -129,9 +137,9 @@ class TitleGenerator(BaseTool):
                 "error": f"Failed to generate titles: {str(e)}"
             }
 
-    def _generate_titles(self, topic, platform, style):
+    async def _generate_titles(self, topic, platform, style):
         """
-        Generate creative titles using the LLM.
+        Generate creative titles using Pydantic AI.
         
         Args:
             topic: The topic for the titles
@@ -141,27 +149,28 @@ class TitleGenerator(BaseTool):
         Returns:
             A list of generated titles
         """
-        # Set up the LLM
-        llm = create_openrouter_llm(
+        # Set up the Pydantic AI Agent
+        agent = create_pydantic_agent(
             DEFAULT_MODEL,
             OPENROUTER_API_KEY,
             OPENROUTER_BASE_URL
         )
         
-        # Create the prompt
-        prompt = PromptTemplate(
-            input_variables=["topic", "platform", "style"],
-            template=title_prompt_template
+        # Format the user prompt with the input variables
+        formatted_user_prompt = title_user_prompt_template.format(
+            topic=topic,
+            platform=platform,
+            style=style
         )
         
-        # Use the newer RunnableSequence approach instead of LLMChain
-        chain = prompt | llm
+        # Combine system and user prompts
+        combined_prompt = f"{title_system_prompt}\n\n{formatted_user_prompt}"
         
-        # Run the chain
-        result = chain.invoke({"topic": topic, "platform": platform, "style": style})
+        # Run the agent with the combined prompt
+        result = await agent.run(combined_prompt)
         
         # Process the result to get a list of titles
-        titles_text = result.content.strip()
+        titles_text = result.data.strip()
         
         # Improved title extraction
         # First try to split by numbered lines
@@ -187,14 +196,19 @@ class TitleGenerator(BaseTool):
         # Ensure exactly 10 titles
         if len(titles) < 10:
             # Request more titles if we don't have enough
-            additional_result = chain.invoke({
-                "topic": topic,
-                "platform": platform,
-                "style": style
-            })
+            additional_user_prompt = title_user_prompt_template.format(
+                topic=topic,
+                platform=platform,
+                style=style
+            )
+            # Combine system and user prompts
+            additional_combined_prompt = f"{title_system_prompt}\n\n{additional_user_prompt}"
+            
+            # Run the agent with the combined prompt
+            additional_result = await agent.run(additional_combined_prompt)
             additional_titles = [
                 re.sub(r'^\d+\.\s*|\*\s*|\-\s*', '', line.strip())
-                for line in additional_result.content.strip().split('\n')
+                for line in additional_result.data.strip().split('\n')
                 if line.strip()
             ]
             titles.extend(additional_titles)
