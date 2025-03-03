@@ -63,14 +63,45 @@ class BaseTool(ABC):
         """
         pass
     
-    def validate_inputs(self, inputs: Dict[str, Any]) -> List[str]:
+    def validate_inputs(self, inputs: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
-        Validate the inputs and return error messages.
+        Validate the inputs and return detailed error information.
         
         Args:
             inputs: Dictionary of input parameters from the form
             
         Returns:
-            List of error messages, empty if validation passed
+            List of error dictionaries with field, code, and message
         """
-        return []
+        errors = []
+        
+        for field_id, field_config in self.input_form_fields.items():
+            # Check required fields
+            if field_config.get("required", False) and not inputs.get(field_id):
+                errors.append({
+                    "field": field_id,
+                    "code": "required",
+                    "message": f"{field_config.get('label', field_id)} is required"
+                })
+            
+            # Check field-specific validation
+            if field_id in inputs and inputs[field_id]:
+                # Example: max length validation
+                max_length = field_config.get("maxLength")
+                if max_length and len(str(inputs[field_id])) > max_length:
+                    errors.append({
+                        "field": field_id,
+                        "code": "max_length",
+                        "message": f"{field_config.get('label', field_id)} exceeds maximum length of {max_length}"
+                    })
+                
+                # Example: min length validation
+                min_length = field_config.get("minLength")
+                if min_length and len(str(inputs[field_id])) < min_length:
+                    errors.append({
+                        "field": field_id,
+                        "code": "min_length",
+                        "message": f"{field_config.get('label', field_id)} must be at least {min_length} characters"
+                    })
+        
+        return errors

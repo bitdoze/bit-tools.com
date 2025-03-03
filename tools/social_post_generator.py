@@ -1,8 +1,7 @@
 import re
-import asyncio
-from .utils import create_pydantic_agent
-from .base import BaseTool
-from config import OPENROUTER_API_KEY, OPENROUTER_BASE_URL, DEFAULT_MODEL
+from typing import List, Dict, Any
+from .factory import create_text_generation_tool
+from .registry import registry
 
 # System prompt for social post generation
 social_system_prompt = """
@@ -90,126 +89,69 @@ social_user_prompt_template = """
 Create 10 engaging {platform} posts for content about: {topic}. Tone: {tone}. Make them platform-appropriate. Don't include 'sure' or numbering. Apply the principles and guidelines provided in the system prompt. Please only include the posts and nothing else
 """
 
-class SocialPostGenerator(BaseTool):
-    """Social Post Generator tool implementation."""
+# Post-processing function for social posts
+def process_social_posts(text: str) -> List[str]:
+    # Remove common introductory phrases
+    text = re.sub(r'^.*?(?:here are|here\'s)\s+\d+.*?:\s*\n*', '', text, flags=re.IGNORECASE | re.MULTILINE)
+    text = re.sub(r'Okay,?\s*', '', text, flags=re.IGNORECASE)
     
-    @property
-    def name(self) -> str:
-        return "Social Media Post Generator"
+    # Split and clean posts
+    posts = []
+    lines = [line.strip() for line in text.split('\n') if line.strip()]
     
-    @property
-    def description(self) -> str:
-        return "Create engaging social media posts for Twitter, Bluesky, Facebook, or Reddit in various tones."
+    for line in lines:
+        cleaned_line = re.sub(r'^\d+\.\s*|\*\s*|\-\s*', '', line)
+        if cleaned_line:
+            posts.append(cleaned_line)
     
-    @property
-    def icon(self) -> str:
-        return """<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z" />
-        </svg>"""
-    
-    @property
-    def input_form_fields(self) -> dict:
-        return {
-            "topic": {
-                "type": "textarea",
-                "label": "What's your content about?",
-                "placeholder": "Describe your content topic in detail for better results...",
-                "required": True,
-                "rows": 3
-            },
-            "platform": {
-                "type": "select",
-                "label": "Platform",
-                "options": [
-                    {"value": "Twitter", "label": "Twitter", "selected": True},
-                    {"value": "Bluesky", "label": "Bluesky"},
-                    {"value": "Facebook", "label": "Facebook"},
-                    {"value": "Reddit", "label": "Reddit"}
-                ]
-            },
-            "tone": {
-                "type": "select",
-                "label": "Tone",
-                "options": [
-                    {"value": "No specific tone", "label": "No specific tone", "selected": True},
-                    {"value": "Funny", "label": "Funny"},
-                    {"value": "Serious", "label": "Serious"},
-                    {"value": "Controversial", "label": "Controversial"},
-                    {"value": "Inspirational", "label": "Inspirational"},
-                    {"value": "Educational", "label": "Educational"},
-                    {"value": "Professional", "label": "Professional"}
-                ]
-            }
+    return posts[:10]  # Ensure we return at most 10 posts
+
+# Create the social post generator tool
+SocialPostGeneratorClass = create_text_generation_tool(
+    name="Social Media Post Generator",
+    description="Create engaging social media posts for Twitter, Bluesky, Facebook, or Reddit in various tones.",
+    icon="""<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z" />
+    </svg>""",
+    system_prompt=social_system_prompt,
+    user_prompt_template=social_user_prompt_template,
+    input_form_fields={
+        "topic": {
+            "type": "textarea",
+            "label": "What's your content about?",
+            "placeholder": "Describe your content topic in detail for better results...",
+            "required": True,
+            "rows": 3
+        },
+        "platform": {
+            "type": "select",
+            "label": "Platform",
+            "options": [
+                {"value": "Twitter", "label": "Twitter", "selected": True},
+                {"value": "Bluesky", "label": "Bluesky"},
+                {"value": "Facebook", "label": "Facebook"},
+                {"value": "Reddit", "label": "Reddit"}
+            ]
+        },
+        "tone": {
+            "type": "select",
+            "label": "Tone",
+            "options": [
+                {"value": "No specific tone", "label": "No specific tone", "selected": True},
+                {"value": "Funny", "label": "Funny"},
+                {"value": "Serious", "label": "Serious"},
+                {"value": "Controversial", "label": "Controversial"},
+                {"value": "Inspirational", "label": "Inspirational"},
+                {"value": "Educational", "label": "Educational"},
+                {"value": "Professional", "label": "Professional"}
+            ]
         }
-    
-    async def process(self, inputs):
-        """Process the inputs and generate posts."""
-        try:
-            topic = inputs.get("topic", "").strip()
-            platform = inputs.get("platform", "Twitter")
-            tone = inputs.get("tone", "No specific tone")
-            
-            if not topic:
-                return {
-                    "error": "Please provide a topic for your posts."
-                }
-            
-            # Directly await the async function
-            posts = await self._generate_posts(topic, platform, tone)
-            
-            return {
-                "metadata": {
-                    "topic": topic,
-                    "platform": platform,
-                    "tone": tone,
-                    "count": len(posts)
-                },
-                "titles": posts  # Using 'titles' to maintain compatibility with existing UI
-            }
-            
-        except Exception as e:
-            return {
-                "error": f"Failed to generate posts: {str(e)}"
-            }
+    },
+    post_process_func=process_social_posts
+)
 
-    async def _generate_posts(self, topic, platform, tone):
-        """Generate social media posts using Pydantic AI."""
-        agent = create_pydantic_agent(
-            DEFAULT_MODEL,
-            OPENROUTER_API_KEY,
-            OPENROUTER_BASE_URL
-        )
-        
-        # Format the user prompt with the input variables
-        formatted_user_prompt = social_user_prompt_template.format(
-            topic=topic,
-            platform=platform,
-            tone=tone
-        )
-        
-        # Combine system and user prompts
-        combined_prompt = f"{social_system_prompt}\n\n{formatted_user_prompt}"
-        
-        # Run the agent with the combined prompt
-        result = await agent.run(combined_prompt)
-        
-        # Process the result to get a list of posts
-        posts_text = result.data.strip()
-        
-        # Remove common introductory phrases
-        posts_text = re.sub(r'^.*?(?:here are|here\'s)\s+\d+.*?:\s*\n*', '', posts_text, flags=re.IGNORECASE | re.MULTILINE)
-        posts_text = re.sub(r'Okay,?\s*', '', posts_text, flags=re.IGNORECASE)
-        
-        # Split and clean posts
-        posts = []
-        lines = [line.strip() for line in posts_text.split('\n') if line.strip()]
-        
-        for line in lines:
-            cleaned_line = re.sub(r'^\d+\.\s*|\*\s*|\-\s*', '', line)
-            if cleaned_line:
-                posts.append(cleaned_line)
-        
-        return posts[:10]  # Ensure we return at most 10 posts
+# Instantiate the tool
+social_post_generator_tool = SocialPostGeneratorClass()
 
-# Create an instance of the tool
-social_post_generator_tool = SocialPostGenerator()
+# Register the tool with the registry
+registry.register(social_post_generator_tool, categories=["Content Creation"])

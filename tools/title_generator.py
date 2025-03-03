@@ -1,8 +1,7 @@
 import re
-import asyncio
-from .utils import create_pydantic_agent
-from .base import BaseTool
-from config import OPENROUTER_API_KEY, OPENROUTER_BASE_URL, DEFAULT_MODEL
+from typing import List, Dict, Any
+from .factory import create_text_generation_tool
+from .registry import registry
 
 # System prompt for title generation
 title_system_prompt = """
@@ -60,161 +59,68 @@ title_user_prompt_template = """
 Create 10 engaging {platform} titles for content about: {topic}. Tone: {style}. Make them catchy and platform-appropriate. Don't include 'sure' or numbering. Apply the principles and guidelines provided in the system prompt. Please only include the titles and nothing else
 """
 
-class TitleGenerator(BaseTool):
-    """Title Generator tool implementation."""
+# Post-processing function for titles
+def process_titles(text: str) -> List[str]:
+    # Remove common introductory phrases
+    text = re.sub(r'^.*?(?:here are|here\'s)\s+\d+.*?:\s*\n*', '', text, flags=re.IGNORECASE | re.MULTILINE)
     
-    @property
-    def name(self) -> str:
-        return "AI Title Generator"
+    # Split and clean titles
+    titles = []
+    lines = [line.strip() for line in text.split('\n') if line.strip()]
     
-    @property
-    def description(self) -> str:
-        return "Create engaging titles for YouTube videos, articles, or TikTok posts in various styles."
+    for line in lines:
+        # Remove any numbering (1., 2., etc) or bullet points
+        cleaned_line = re.sub(r'^\d+\.\s*|\*\s*|\-\s*', '', line)
+        if cleaned_line:
+            titles.append(cleaned_line)
     
-    @property
-    def icon(self) -> str:
-        return """<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
-        </svg>"""
+    # Remove duplicates while preserving order
+    seen = set()
+    unique_titles = [t for t in titles if not (t in seen or seen.add(t))]
     
-    @property
-    def input_form_fields(self) -> dict:
-        return {
-            "topic": {
-                "type": "textarea",
-                "label": "What's your content about?",
-                "placeholder": "Describe your content topic in detail for better results...",
-                "required": True,
-                "rows": 3
-            },
-            "platform": {
-                "type": "select",
-                "label": "Platform",
-                "options": [
-                    {"value": "YouTube", "label": "YouTube", "selected": True},
-                    {"value": "Article", "label": "Article"},
-                    {"value": "TikTok", "label": "TikTok"}
-                ]
-            },
-            "style": {
-                "type": "select",
-                "label": "Style",
-                "options": [
-                    {"value": "Professional", "label": "Professional", "selected": True},
-                    {"value": "Funny", "label": "Funny"}
-                ]
-            }
-        }
-    
-    async def process(self, inputs):
-        """Process the inputs and generate titles."""
-        try:
-            topic = inputs.get("topic", "").strip()
-            platform = inputs.get("platform", "YouTube")
-            style = inputs.get("style", "Professional")
-            
-            if not topic:
-                return {
-                    "error": "Please provide a topic for your titles."
-                }
-            
-            # Directly await the async function
-            titles = await self._generate_titles(topic, platform, style)
-            
-            # Group titles by category for better presentation
-            return {
-                "metadata": {
-                    "topic": topic,
-                    "platform": platform,
-                    "style": style,
-                    "count": len(titles)
-                },
-                "titles": titles
-            }
-            
-        except Exception as e:
-            return {
-                "error": f"Failed to generate titles: {str(e)}"
-            }
+    # Return at most 10 titles
+    return unique_titles[:10]
 
-    async def _generate_titles(self, topic, platform, style):
-        """
-        Generate creative titles using Pydantic AI.
-        
-        Args:
-            topic: The topic for the titles
-            platform: The platform (YouTube, Article, TikTok)
-            style: The style (Funny, Professional)
-            
-        Returns:
-            A list of generated titles
-        """
-        # Set up the Pydantic AI Agent
-        agent = create_pydantic_agent(
-            DEFAULT_MODEL,
-            OPENROUTER_API_KEY,
-            OPENROUTER_BASE_URL
-        )
-        
-        # Format the user prompt with the input variables
-        formatted_user_prompt = title_user_prompt_template.format(
-            topic=topic,
-            platform=platform,
-            style=style
-        )
-        
-        # Combine system and user prompts
-        combined_prompt = f"{title_system_prompt}\n\n{formatted_user_prompt}"
-        
-        # Run the agent with the combined prompt
-        result = await agent.run(combined_prompt)
-        
-        # Process the result to get a list of titles
-        titles_text = result.data.strip()
-        
-        # Improved title extraction
-        # First try to split by numbered lines
-        titles = []
-        lines = [line.strip() for line in titles_text.split('\n') if line.strip()]
-        
-        for line in lines:
-            # Remove any numbering (1., 2., etc) or bullet points
-            cleaned_line = re.sub(r'^\d+\.\s*|\*\s*|\-\s*', '', line)
-            if cleaned_line:
-                titles.append(cleaned_line)
-        
-        # If we don't have enough titles, try alternative parsing
-        if len(titles) < 10:
-            # Try to extract titles with more flexible pattern
-            all_possible_titles = re.findall(r'(?:^|\n)(?:\d+\.|\*|\-|\–)?\s*([^\n]+)', titles_text)
-            titles.extend([t.strip() for t in all_possible_titles if t.strip()])
-            
-            # Remove duplicates while preserving order
-            seen = set()
-            titles = [t for t in titles if not (t in seen or seen.add(t))]
-        
-        # Ensure exactly 10 titles
-        if len(titles) < 10:
-            # Request more titles if we don't have enough
-            additional_user_prompt = title_user_prompt_template.format(
-                topic=topic,
-                platform=platform,
-                style=style
-            )
-            # Combine system and user prompts
-            additional_combined_prompt = f"{title_system_prompt}\n\n{additional_user_prompt}"
-            
-            # Run the agent with the combined prompt
-            additional_result = await agent.run(additional_combined_prompt)
-            additional_titles = [
-                re.sub(r'^\d+\.\s*|\*\s*|\-\s*', '', line.strip())
-                for line in additional_result.data.strip().split('\n')
-                if line.strip()
+# Create the title generator tool
+TitleGeneratorClass = create_text_generation_tool(
+    name="AI Title Generator",
+    description="Create engaging titles for YouTube videos, articles, or TikTok posts in various styles.",
+    icon="""<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+    </svg>""",
+    system_prompt=title_system_prompt,
+    user_prompt_template=title_user_prompt_template,
+    input_form_fields={
+        "topic": {
+            "type": "textarea",
+            "label": "What's your content about?",
+            "placeholder": "Describe your content topic in detail for better results...",
+            "required": True,
+            "rows": 3
+        },
+        "platform": {
+            "type": "select",
+            "label": "Platform",
+            "options": [
+                {"value": "YouTube", "label": "YouTube", "selected": True},
+                {"value": "Article", "label": "Article"},
+                {"value": "TikTok", "label": "TikTok"}
             ]
-            titles.extend(additional_titles)
-        
-        # Return exactly 10 unique titles
-        return list(dict.fromkeys(titles))[:10]
+        },
+        "style": {
+            "type": "select",
+            "label": "Style",
+            "options": [
+                {"value": "Professional", "label": "Professional", "selected": True},
+                {"value": "Funny", "label": "Funny"}
+            ]
+        }
+    },
+    post_process_func=process_titles
+)
 
-# Create an instance of the tool for easy importing
-title_generator_tool = TitleGenerator()
+# Instantiate the tool
+title_generator_tool = TitleGeneratorClass()
+
+# Register the tool with the registry
+registry.register(title_generator_tool, categories=["Content Creation"])
