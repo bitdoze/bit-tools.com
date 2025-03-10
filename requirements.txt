@@ -1,4 +1,3 @@
 python-fasthtml
 python-dotenv
-pydantic-ai
-openai
+agno

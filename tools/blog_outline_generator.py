@@ -2,6 +2,10 @@ import re
 from typing import List, Dict, Any
 from .factory import create_text_generation_tool
 from .registry import registry
+import logging
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 # System prompt for blog outline generation
 blog_outline_system_prompt = """
@@ -30,12 +34,18 @@ Include an introduction, main sections with subsections, and a conclusion. For e
 
 # Post-processing function for blog outlines
 def process_blog_outline(text: str) -> List[str]:
+    # Log the received text for debugging
+    logger.info(f"Processing blog outline text (length: {len(text)})")
+    logger.info(f"Text sample: {text[:200]}...")
+
     # Remove common introductory phrases
     text = re.sub(r'^.*?(?:here\'s|here is).*?outline.*?:\s*\n*', '', text, flags=re.IGNORECASE | re.MULTILINE)
-    
+
     # Split by lines and clean
     lines = [line.strip() for line in text.split('\n') if line.strip()]
-    
+
+    logger.info(f"Processed into {len(lines)} lines")
+
     # Process the outline
     return lines
 

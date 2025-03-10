@@ -63,21 +63,21 @@ Create 10 engaging {platform} titles for content about: {topic}. Tone: {style}. 
 def process_titles(text: str) -> List[str]:
     # Remove common introductory phrases
     text = re.sub(r'^.*?(?:here are|here\'s)\s+\d+.*?:\s*\n*', '', text, flags=re.IGNORECASE | re.MULTILINE)
-    
+
     # Split and clean titles
     titles = []
     lines = [line.strip() for line in text.split('\n') if line.strip()]
-    
+
     for line in lines:
         # Remove any numbering (1., 2., etc) or bullet points
         cleaned_line = re.sub(r'^\d+\.\s*|\*\s*|\-\s*', '', line)
         if cleaned_line:
             titles.append(cleaned_line)
-    
+
     # Remove duplicates while preserving order
     seen = set()
     unique_titles = [t for t in titles if not (t in seen or seen.add(t))]
-    
+
     # Return at most 10 titles
     return unique_titles[:10]
 

@@ -1,7 +1,11 @@
 import re
+import logging
 from typing import List, Dict, Any
 from .factory import create_text_generation_tool
 from .registry import registry
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 # System prompt for social post generation
 social_system_prompt = """
@@ -91,20 +95,37 @@ Create 10 engaging {platform} posts for content about: {topic}. Tone: {tone}. Ma
 
 # Post-processing function for social posts
 def process_social_posts(text: str) -> List[str]:
+    # Log the received text for debugging
+    logger.info(f"Processing social post text (length: {len(text)})")
+    logger.info(f"Text sample: {text[:200]}...")
+
     # Remove common introductory phrases
     text = re.sub(r'^.*?(?:here are|here\'s)\s+\d+.*?:\s*\n*', '', text, flags=re.IGNORECASE | re.MULTILINE)
     text = re.sub(r'Okay,?\s*', '', text, flags=re.IGNORECASE)
-    
+
     # Split and clean posts
     posts = []
-    lines = [line.strip() for line in text.split('\n') if line.strip()]
-    
+    lines = [line.strip() for line in text.split('\n\n') if line.strip()]
+
+    if len(lines) <= 1:  # If splitting by double newline doesn't work, try single newline
+        lines = [line.strip() for line in text.split('\n') if line.strip()]
+
+    logger.info(f"Split into {len(lines)} lines/paragraphs")
+
     for line in lines:
+        # Remove any numbering (1., 2., etc) or bullet points
         cleaned_line = re.sub(r'^\d+\.\s*|\*\s*|\-\s*', '', line)
         if cleaned_line:
             posts.append(cleaned_line)
-    
-    return posts[:10]  # Ensure we return at most 10 posts
+
+    # Remove duplicates while preserving order
+    seen = set()
+    unique_posts = [p for p in posts if not (p in seen or seen.add(p))]
+
+    logger.info(f"Processed into {len(unique_posts)} unique posts (returning max 10)")
+
+    # Return at most 10 posts
+    return unique_posts[:10]
 
 # Create the social post generator tool
 SocialPostGeneratorClass = create_text_generation_tool(
