@@ -26,8 +26,8 @@ Your outlines should be comprehensive enough to guide the writing process while 
 blog_outline_user_prompt_template = """
 Create a detailed blog post outline for a {word_count}-word article about: {topic}
 
-Target audience: {audience}
-Purpose: {purpose}
+Target audience: {target_audience}
+Purpose: {tone}
 
 Include an introduction, main sections with subsections, and a conclusion. For each section, provide brief notes on what to cover.
 """
@@ -83,6 +83,16 @@ BlogOutlineGeneratorClass = create_text_generation_tool(
             "placeholder": "Describe your blog topic in detail...",
             "required": True,
             "rows": 3
+        },
+        "word_count": {
+            "type": "select",
+            "label": "Word Count",
+            "options": [
+                {"value": "500", "label": "Short (500 words)", "selected": False},
+                {"value": "1000", "label": "Medium (1000 words)", "selected": True},
+                {"value": "1500", "label": "Long (1500 words)", "selected": False},
+                {"value": "2000", "label": "Comprehensive (2000+ words)", "selected": False}
+            ]
         },
         "target_audience": {
             "type": "textarea",
