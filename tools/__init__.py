@@ -1,11 +1,12 @@
 # Import the registry
-from .registry import registry
+from .core.registry import registry
 
-# Import tool modules to ensure they're registered
-# Note: We don't need to register them here as they're already registered in their respective files
-from . import title_generator
-from . import social_post_generator
-from . import blog_outline_generator
+# Import tool implementations to ensure they're registered
+from .implementations import blog_outline_generator
+from .implementations import social_post_generator
+# Import title and thumbnail generators directly
+from .implementations.title_generator import title_generator_tool
+from .implementations.thumbnail_generator import thumbnail_generator_tool
 
 def get_all_tools():
     """Get all available tools."""

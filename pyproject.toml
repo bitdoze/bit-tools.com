@@ -1,0 +1,12 @@
+[project]
+name = "bit-tools-com"
+version = "0.1.0"
+description = "This is my website with Ai Tools"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "agno>=1.1.10",
+    "openai>=1.66.3",
+    "python-dotenv>=1.0.1",
+    "python-fasthtml>=0.12.4",
+]
