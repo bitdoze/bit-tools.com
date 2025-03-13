@@ -127,6 +127,24 @@ def process_social_posts(text: str) -> List[str]:
     # Return at most 10 posts
     return unique_posts[:10]
 
+# Define custom tips and benefits for the social post generator
+social_post_tips = [
+    "Keep Twitter posts under 280 characters for optimal engagement",
+    "Use relevant hashtags to increase discoverability",
+    "Include a call-to-action in your posts to boost engagement",
+    "Use emojis strategically to add personality to your posts",
+    "Tailor your content to each platform's unique audience",
+    "Post at optimal times for your target audience"
+]
+
+social_post_benefits = [
+    "Save time creating platform-specific social media content",
+    "Maintain a consistent posting schedule with ready-to-use content",
+    "Increase engagement with professionally crafted posts",
+    "Experiment with different tones and styles to find what works best",
+    "Build a stronger social media presence across multiple platforms"
+]
+
 # Create the social post generator tool
 SocialPostGeneratorClass = create_text_generation_tool(
     name="Social Media Post Generator",
@@ -170,6 +188,10 @@ SocialPostGeneratorClass = create_text_generation_tool(
     },
     post_process_func=process_social_posts
 )
+
+# Add custom tips and benefits
+SocialPostGeneratorClass.tips = social_post_tips
+SocialPostGeneratorClass.benefits = social_post_benefits
 
 # Instantiate the tool
 social_post_generator_tool = SocialPostGeneratorClass()

@@ -7,6 +7,7 @@ from .implementations import social_post_generator
 # Import title and thumbnail generators directly
 from .implementations.title_generator import title_generator_tool
 from .implementations.thumbnail_generator import thumbnail_generator_tool
+from .implementations.youtube_script_generator import youtube_script_generator_tool
 
 def get_all_tools():
     """Get all available tools."""

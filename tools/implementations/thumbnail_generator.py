@@ -89,6 +89,24 @@ def process_thumbnail_ideas(text: str) -> List[str]:
     # Return at most 5 ideas
     return cleaned_ideas[:5]
 
+# Define custom tips and benefits for the thumbnail generator
+thumbnail_tips = [
+    "Use bold, contrasting colors to stand out",
+    "Include close-up faces or emotions when relevant",
+    "Keep text large and limited to 3-4 words",
+    "Ensure your thumbnail is clear at small sizes",
+    "Use high-quality, relevant images",
+    "Create a consistent style for your channel"
+]
+
+thumbnail_benefits = [
+    "Save time brainstorming thumbnail concepts",
+    "Increase your video's visibility on YouTube",
+    "Attract more viewers with eye-catching designs",
+    "Experiment with different styles and approaches",
+    "Maintain consistency while keeping your content fresh"
+]
+
 # Create the thumbnail idea generator tool
 ThumbnailGeneratorClass = create_text_generation_tool(
     name="YouTube Thumbnail Ideas Generator",
@@ -109,6 +127,10 @@ ThumbnailGeneratorClass = create_text_generation_tool(
     },
     post_process_func=process_thumbnail_ideas
 )
+
+# Add custom tips and benefits
+ThumbnailGeneratorClass.tips = thumbnail_tips
+ThumbnailGeneratorClass.benefits = thumbnail_benefits
 
 # Instantiate the tool
 thumbnail_generator_tool = ThumbnailGeneratorClass()

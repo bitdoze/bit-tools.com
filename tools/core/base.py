@@ -9,6 +9,10 @@ class BaseTool(ABC):
     making it easier to add new tools to the system.
     """
     
+    # Tool-specific tips and benefits
+    tips = []
+    benefits = []
+    
     @property
     @abstractmethod
     def name(self) -> str:

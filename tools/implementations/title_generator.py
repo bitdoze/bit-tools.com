@@ -81,6 +81,24 @@ def process_titles(text: str) -> List[str]:
     # Return at most 10 titles
     return unique_titles[:10]
 
+# Define custom tips and benefits for the title generator
+title_tips = [
+    "Use numbers in your titles (e.g., '7 Ways to...') to increase clicks",
+    "Include emotional words to trigger curiosity or excitement",
+    "Keep YouTube titles under 60 characters to avoid truncation",
+    "Use keywords relevant to your topic for better SEO",
+    "Ask questions in your titles to engage readers",
+    "Create a sense of urgency with words like 'now' or 'today'"
+]
+
+title_benefits = [
+    "Increase click-through rates with attention-grabbing titles",
+    "Save time brainstorming multiple title options",
+    "Improve your content's discoverability through better titles",
+    "Test different title styles to see what works best for your audience",
+    "Maintain consistent quality across all your content"
+]
+
 # Create the title generator tool
 TitleGeneratorClass = create_text_generation_tool(
     name="AI Title Generator",
@@ -118,6 +136,10 @@ TitleGeneratorClass = create_text_generation_tool(
     },
     post_process_func=process_titles
 )
+
+# Add custom tips and benefits
+TitleGeneratorClass.tips = title_tips
+TitleGeneratorClass.benefits = title_benefits
 
 # Instantiate the tool
 title_generator_tool = TitleGeneratorClass()

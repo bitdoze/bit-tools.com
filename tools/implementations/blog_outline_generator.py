@@ -49,10 +49,28 @@ def process_blog_outline(text: str) -> List[str]:
     # Process the outline
     return lines
 
+# Define custom tips and benefits for the blog outline generator
+blog_outline_tips = [
+    "Include a compelling introduction and conclusion in your outline",
+    "Break down complex topics into digestible sections",
+    "Consider adding FAQs to address common reader questions",
+    "Plan for visual elements like images, charts, or infographics",
+    "Include a call-to-action at the end of your blog post",
+    "Research keywords to include in your headings for better SEO"
+]
+
+blog_outline_benefits = [
+    "Save time planning your blog content structure",
+    "Create more organized and coherent blog posts",
+    "Ensure comprehensive coverage of your topic",
+    "Improve reader engagement with a logical flow",
+    "Make the writing process faster and more efficient"
+]
+
 # Create the blog outline generator tool
 BlogOutlineGeneratorClass = create_text_generation_tool(
-    name="Blog Post Outline Generator",
-    description="Create detailed, structured outlines for blog posts on any topic.",
+    name="Blog Outline Generator",
+    description="Create a structured outline for your blog post.",
     icon="""<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
         <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
     </svg>""",
@@ -66,35 +84,39 @@ BlogOutlineGeneratorClass = create_text_generation_tool(
             "required": True,
             "rows": 3
         },
-        "audience": {
-            "type": "text",
+        "target_audience": {
+            "type": "textarea",
             "label": "Target Audience",
-            "placeholder": "e.g., Beginners, Marketing Professionals, Parents",
-            "required": True
+            "placeholder": "Who is your target audience?",
+            "required": False,
+            "rows": 2
         },
-        "purpose": {
+        "tone": {
             "type": "select",
-            "label": "Content Purpose",
+            "label": "Tone",
             "options": [
-                {"value": "Educate", "label": "Educate", "selected": True},
-                {"value": "Entertain", "label": "Entertain"},
-                {"value": "Inspire", "label": "Inspire"},
-                {"value": "Persuade", "label": "Persuade"},
-                {"value": "Sell", "label": "Sell"}
+                {"value": "professional", "label": "Professional", "selected": True},
+                {"value": "casual", "label": "Casual"},
+                {"value": "educational", "label": "Educational"},
+                {"value": "humorous", "label": "Humorous"}
             ]
         },
-        "word_count": {
+        "sections": {
             "type": "select",
-            "label": "Approximate Word Count",
+            "label": "Number of Sections",
             "options": [
-                {"value": "500-800", "label": "Short (500-800 words)"},
-                {"value": "1000-1500", "label": "Medium (1000-1500 words)", "selected": True},
-                {"value": "2000-3000", "label": "Long (2000-3000 words)"}
+                {"value": "3-5", "label": "3-5 Sections", "selected": True},
+                {"value": "5-7", "label": "5-7 Sections"},
+                {"value": "7-10", "label": "7-10 Sections"}
             ]
         }
     },
     post_process_func=process_blog_outline
 )
+
+# Add custom tips and benefits
+BlogOutlineGeneratorClass.tips = blog_outline_tips
+BlogOutlineGeneratorClass.benefits = blog_outline_benefits
 
 # Instantiate the tool
 blog_outline_generator_tool = BlogOutlineGeneratorClass()

@@ -3,6 +3,7 @@ from .base_results import BaseResultsHandler
 from .transformation_results import TransformationResultsHandler
 from .outline_results import OutlineResultsHandler
 from .standard_results import StandardResultsHandler
+from .youtube_script_results import YoutubeScriptResultsHandler
 
 def create_results_page(tool_id, tool, results):
     """
@@ -21,6 +22,8 @@ def create_results_page(tool_id, tool, results):
         handler = TransformationResultsHandler(tool_id, tool, results)
     elif "outline" in tool_id.lower():
         handler = OutlineResultsHandler(tool_id, tool, results)
+    elif "youtube-script" in tool_id.lower():
+        handler = YoutubeScriptResultsHandler(tool_id, tool, results)
     else:
         handler = StandardResultsHandler(tool_id, tool, results)
         

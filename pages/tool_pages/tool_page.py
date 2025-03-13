@@ -52,6 +52,57 @@ def create_form_field(field_id, field_config):
         cls="mb-6"
     )
 
+def get_tool_tips_section(tool):
+    """Get tool-specific tips section."""
+    # Check if the tool has custom tips
+    if hasattr(tool, 'tips') and tool.tips:
+        # Tool has custom tips
+        tips_items = [Li(tip, cls="mb-2") for tip in tool.tips]
+        return Div(
+            H2(f"Tips for {tool.name}", cls="text-2xl font-semibold mb-4 text-blue-700"),
+            Ul(
+                *tips_items,
+                cls="list-disc pl-5 space-y-2 text-blue-800"
+            ),
+            cls="mt-12 max-w-2xl mx-auto bg-blue-50 p-6 rounded-lg"
+        )
+    else:
+        # Generic tips for tools without custom tips
+        return Div(
+            H3("Tips for Better Results", cls="text-xl font-semibold mb-4"),
+            Ul(
+                Li("Be specific about your topic - include key points you want to highlight", cls="mb-2"),
+                Li("Consider your target audience and what would appeal to them", cls="mb-2"),
+                Li("The more context you provide, the better the results will be", cls="mb-2"),
+                Li("Try different options to see what works best for your needs", cls="mb-2"),
+                cls="list-disc list-inside text-gray-700"
+            ),
+            cls="mt-12 max-w-2xl mx-auto bg-blue-50 p-6 rounded-lg"
+        )
+
+def get_tool_benefits_section(tool):
+    """Get tool-specific benefits section."""
+    # Check if the tool has custom benefits
+    if hasattr(tool, 'benefits') and tool.benefits:
+        # Tool has custom benefits
+        benefit_items = [Li(benefit, cls="mb-2") for benefit in tool.benefits]
+        return Div(
+            H2(f"Elevate Your Content with {tool.name}", cls="text-3xl font-bold text-blue-800 mb-6"),
+            Div(
+                P(f"Our {tool.name} helps you create high-quality content efficiently. By using this AI-powered tool, you can:", cls="text-gray-700"),
+                Ul(
+                    *benefit_items,
+                    cls="list-disc pl-8 space-y-2 text-gray-700 mt-4"
+                ),
+                P(f"Use these AI-generated {tool.name.lower()} as a starting point to create content that captures attention and drives engagement.", cls="text-gray-700 mt-4"),
+                cls="space-y-6"
+            ),
+            cls="mt-16 bg-gradient-to-r from-blue-50 to-indigo-50 p-8 rounded-xl shadow-lg max-w-2xl mx-auto"
+        )
+    else:
+        # No benefits section for tools without custom benefits
+        return Div()
+
 def tool_page(tool_id):
     """
     Generate a tool page based on the tool ID.
@@ -125,18 +176,11 @@ def tool_page(tool_id):
             cls="max-w-2xl mx-auto relative"
         ),
 
-        # Tips section
-        Div(
-            H3("Tips for Better Results", cls="text-xl font-semibold mb-4"),
-            Ul(
-                Li("Be specific about your topic - include key points you want to highlight", cls="mb-2"),
-                Li("Consider your target audience and what would appeal to them", cls="mb-2"),
-                Li("The more context you provide, the better the results will be", cls="mb-2"),
-                Li("Try different options to see what works best for your needs", cls="mb-2"),
-                cls="list-disc list-inside text-gray-700"
-            ),
-            cls="mt-12 max-w-2xl mx-auto bg-blue-50 p-6 rounded-lg"
-        ),
+        # Tool-specific tips section
+        get_tool_tips_section(tool),
+        
+        # Tool benefits section
+        get_tool_benefits_section(tool),
 
         # JavaScript for loading state
         Script("""

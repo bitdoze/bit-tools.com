@@ -8,19 +8,58 @@ class StandardResultsHandler(BaseResultsHandler):
     
     def create_list_view(self):
         """Create the list view for standard results."""
-        list_items = [
-            Div(
-                P(f"{i+1}. {title}", cls="mb-1 flex-grow", id=f"title-text-{i}"),
-                Button(
-                    "Copy",
-                    type="button",
-                    id=f"copy-btn-{i}",
-                    cls="text-sm bg-gray-200 hover:bg-gray-300 text-gray-800 py-1 px-2 rounded ml-2"
-                ),
-                cls="flex items-center justify-between p-3 bg-white rounded shadow-sm mb-3 hover:shadow-md transition-shadow"
-            )
-            for i, title in enumerate(self.titles)
-        ]
+        list_items = []
+        
+        for i, content in enumerate(self.titles):
+            # Check if the content is short (likely a title) or long (paragraph/post)
+            is_long_content = len(content) > 100
+            
+            if is_long_content:
+                # For longer content, use a more spacious layout with preview
+                preview = content[:100] + "..." if len(content) > 100 else content
+                list_items.append(
+                    Div(
+                        Div(
+                            P(f"{i+1}.", cls="font-bold mr-2 text-gray-500"),
+                            P(preview, cls="text-gray-700", id=f"title-preview-{i}"),
+                            cls="flex items-start mb-2"
+                        ),
+                        Div(
+                            P(content, cls="whitespace-pre-wrap text-gray-800 mb-3", id=f"title-text-{i}"),
+                            cls="hidden" if len(content) > 100 else ""
+                        ),
+                        Div(
+                            Button(
+                                "Show More" if len(content) > 100 else "Show Less",
+                                type="button",
+                                id=f"toggle-btn-{i}",
+                                cls="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 py-1 px-2 rounded mr-2"
+                            ) if is_long_content else Div(),
+                            Button(
+                                "Copy",
+                                type="button",
+                                id=f"copy-btn-{i}",
+                                cls="text-sm bg-gray-200 hover:bg-gray-300 text-gray-800 py-1 px-2 rounded"
+                            ),
+                            cls="flex justify-end"
+                        ),
+                        cls="p-4 bg-white rounded shadow-sm mb-4 hover:shadow-md transition-shadow"
+                    )
+                )
+            else:
+                # For shorter content (titles), use the original compact layout
+                list_items.append(
+                    Div(
+                        P(f"{i+1}. {content}", cls="mb-1 flex-grow", id=f"title-text-{i}"),
+                        Button(
+                            "Copy",
+                            type="button",
+                            id=f"copy-btn-{i}",
+                            cls="text-sm bg-gray-200 hover:bg-gray-300 text-gray-800 py-1 px-2 rounded ml-2"
+                        ),
+                        cls="flex items-center justify-between p-3 bg-white rounded shadow-sm mb-3 hover:shadow-md transition-shadow"
+                    )
+                )
         
         return Div(
             *list_items,
@@ -30,11 +69,42 @@ class StandardResultsHandler(BaseResultsHandler):
     
     def create_card_view(self):
         """Create the card view for standard results."""
-        return Div(
-            Div(
-                *[
+        card_items = []
+        
+        for i, content in enumerate(self.titles):
+            # Check if the content is short (likely a title) or long (paragraph/post)
+            is_long_content = len(content) > 100
+            
+            if is_long_content:
+                # For longer content, show a preview with expand/collapse
+                preview = content[:80] + "..." if len(content) > 80 else content
+                card_items.append(
                     Div(
-                        P(title, cls="text-center mb-2", id=f"card-text-{i}"),
+                        P(preview, cls="text-center mb-2 text-sm", id=f"card-preview-{i}"),
+                        P(content, cls="text-center mb-2 text-sm whitespace-pre-wrap hidden", id=f"card-full-{i}"),
+                        Div(
+                            Button(
+                                "Show More",
+                                type="button",
+                                id=f"card-toggle-btn-{i}",
+                                cls="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 py-1 px-2 rounded w-full mb-2"
+                            ) if is_long_content else Div(),
+                            Button(
+                                "Copy",
+                                type="button",
+                                id=f"card-copy-btn-{i}",
+                                cls="text-sm bg-gray-200 hover:bg-gray-300 text-gray-800 py-1 px-2 rounded w-full"
+                            ),
+                            cls="flex flex-col"
+                        ),
+                        cls="p-4 bg-white rounded shadow-sm hover:shadow-md transition-shadow"
+                    )
+                )
+            else:
+                # For shorter content, use the original card layout
+                card_items.append(
+                    Div(
+                        P(content, cls="text-center mb-2", id=f"card-text-{i}"),
                         Button(
                             "Copy",
                             type="button",
@@ -43,8 +113,11 @@ class StandardResultsHandler(BaseResultsHandler):
                         ),
                         cls="p-4 bg-white rounded shadow-sm hover:shadow-md transition-shadow"
                     )
-                    for i, title in enumerate(self.titles)
-                ],
+                )
+        
+        return Div(
+            Div(
+                *card_items,
                 cls="grid grid-cols-1 md:grid-cols-2 gap-4"
             ),
             id="card-view",
@@ -141,14 +214,66 @@ class StandardResultsHandler(BaseResultsHandler):
                         });
                     }
                     
-                    // Setup individual copy buttons
+                    // Setup toggle buttons for list view
+                    document.querySelectorAll('[id^="toggle-btn-"]').forEach(button => {
+                        const index = button.id.replace('toggle-btn-', '');
+                        const previewEl = document.getElementById('title-preview-' + index);
+                        const fullTextEl = document.getElementById('title-text-' + index).parentNode;
+                        
+                        if (previewEl && fullTextEl) {
+                            button.addEventListener('click', function() {
+                                const isExpanded = !fullTextEl.classList.contains('hidden');
+                                
+                                if (isExpanded) {
+                                    // Collapse
+                                    fullTextEl.classList.add('hidden');
+                                    previewEl.parentNode.classList.remove('hidden');
+                                    button.textContent = 'Show More';
+                                } else {
+                                    // Expand
+                                    fullTextEl.classList.remove('hidden');
+                                    button.textContent = 'Show Less';
+                                }
+                            });
+                        }
+                    });
+                    
+                    // Setup toggle buttons for card view
+                    document.querySelectorAll('[id^="card-toggle-btn-"]').forEach(button => {
+                        const index = button.id.replace('card-toggle-btn-', '');
+                        const previewEl = document.getElementById('card-preview-' + index);
+                        const fullTextEl = document.getElementById('card-full-' + index);
+                        
+                        if (previewEl && fullTextEl) {
+                            button.addEventListener('click', function() {
+                                const isExpanded = !fullTextEl.classList.contains('hidden');
+                                
+                                if (isExpanded) {
+                                    // Collapse
+                                    fullTextEl.classList.add('hidden');
+                                    previewEl.classList.remove('hidden');
+                                    button.textContent = 'Show More';
+                                } else {
+                                    // Expand
+                                    fullTextEl.classList.remove('hidden');
+                                    previewEl.classList.add('hidden');
+                                    button.textContent = 'Show Less';
+                                }
+                            });
+                        }
+                    });
+                    
+                    // Setup individual copy buttons for list view
                     document.querySelectorAll('[id^="copy-btn-"]').forEach(button => {
                         const index = button.id.replace('copy-btn-', '');
-                        const textEl = document.getElementById('title-text-' + index);
+                        const textEl = document.getElementById('title-text-' + index) || 
+                                      document.getElementById('title-preview-' + index)?.parentNode.nextElementSibling.firstElementChild;
                         
                         if (textEl) {
                             button.addEventListener('click', function() {
-                                const text = textEl.textContent.replace(/^\\d+\\.\\s*/, ''); // Remove numbering
+                                // Get text content, removing numbering if present
+                                let text = textEl.textContent;
+                                text = text.replace(/^\\d+\\.\\s*/, ''); // Remove numbering
                                 
                                 navigator.clipboard.writeText(text)
                                     .then(() => {
@@ -164,13 +289,17 @@ class StandardResultsHandler(BaseResultsHandler):
                         }
                     });
                     
+                    // Setup individual copy buttons for card view
                     document.querySelectorAll('[id^="card-copy-btn-"]').forEach(button => {
                         const index = button.id.replace('card-copy-btn-', '');
-                        const textEl = document.getElementById('card-text-' + index);
+                        const textEl = document.getElementById('card-text-' + index) || 
+                                      document.getElementById('card-full-' + index);
+                        const previewEl = document.getElementById('card-preview-' + index);
                         
-                        if (textEl) {
+                        if (textEl || previewEl) {
                             button.addEventListener('click', function() {
-                                const text = textEl.textContent;
+                                // Use full text if available, otherwise use preview
+                                const text = textEl ? textEl.textContent : previewEl.textContent;
                                 
                                 navigator.clipboard.writeText(text)
                                     .then(() => {

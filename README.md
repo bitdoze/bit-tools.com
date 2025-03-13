@@ -36,7 +36,8 @@ Adding a new tool to the application is straightforward:
 2. **Use the factory functions** to create your tool:
    - For text generation tools: `create_text_generation_tool`
    - For text transformation tools: `create_text_transformation_tool`
-3. **Register your tool** with the registry
+3. **Add custom tips and benefits** to enhance the tool page
+4. **Register your tool** with the registry
 
 ### Example: Creating a Text Generation Tool
 
@@ -93,8 +94,27 @@ MyNewToolClass = create_text_generation_tool(
     post_process_func=process_results
 )
 
+# Define custom tips and benefits for your tool
+tool_tips = [
+    "Tip 1: Be specific in your descriptions",
+    "Tip 2: Use keywords relevant to your topic",
+    "Tip 3: Consider your target audience",
+    "Tip 4: Experiment with different styles"
+]
+
+tool_benefits = [
+    "Save time on content creation",
+    "Improve engagement with your audience",
+    "Generate fresh ideas consistently",
+    "Maintain quality across all your content"
+]
+
 # Instantiate the tool
 my_new_tool = MyNewToolClass()
+
+# Add custom tips and benefits
+MyNewToolClass.tips = tool_tips
+MyNewToolClass.benefits = tool_benefits
 
 # Register the tool with the registry
 registry.register(my_new_tool, categories=["Your Category"])
