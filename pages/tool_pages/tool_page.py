@@ -204,5 +204,36 @@ def tool_page(tool_id):
                     submitButton.disabled = false;
                 }
             });
+            
+            // Handle browser back/forward navigation
+            window.addEventListener('popstate', function() {
+                // Reset loading state when using browser navigation controls
+                const loadingOverlay = document.getElementById('loading-overlay');
+                if (loadingOverlay) {
+                    loadingOverlay.classList.add('hidden');
+                }
+
+                const submitButton = document.getElementById('submit-button');
+                if (submitButton) {
+                    submitButton.disabled = false;
+                }
+            });
+            
+            // Force hide loading overlay on page load and back button
+            // This ensures the loading overlay is hidden even if the popstate event doesn't fire properly
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                    // Page is now visible (e.g., after returning from another tab or using back button)
+                    const loadingOverlay = document.getElementById('loading-overlay');
+                    if (loadingOverlay) {
+                        loadingOverlay.classList.add('hidden');
+                    }
+
+                    const submitButton = document.getElementById('submit-button');
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                    }
+                }
+            });
         """)
     )

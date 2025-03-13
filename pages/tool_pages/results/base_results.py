@@ -69,6 +69,39 @@ class BaseResultsHandler:
                     submitButton.disabled = false;
                 }
             });
+            
+            // Add event listener for browser navigation events (back/forward buttons)
+            window.addEventListener('popstate', function() {
+                // Hide any loading overlays when navigating with browser controls
+                const loadingOverlay = document.getElementById('loading-overlay');
+                if (loadingOverlay) {
+                    loadingOverlay.classList.add('hidden');
+                }
+
+                // Reset any disabled submit buttons
+                const submitButton = document.getElementById('submit-button');
+                if (submitButton) {
+                    submitButton.disabled = false;
+                }
+            });
+            
+            // Force hide loading overlay on page load and back button
+            // This ensures the loading overlay is hidden even if the popstate event doesn't fire properly
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                    // Page is now visible (e.g., after returning from another tab or using back button)
+                    const loadingOverlay = document.getElementById('loading-overlay');
+                    if (loadingOverlay) {
+                        loadingOverlay.classList.add('hidden');
+                    }
+
+                    // Reset any disabled submit buttons
+                    const submitButton = document.getElementById('submit-button');
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                    }
+                }
+            });
         """)
     
     def render(self):
