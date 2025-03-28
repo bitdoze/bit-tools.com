@@ -1,368 +1,175 @@
+# pages/tool_pages/results/youtube_script_results.py
 from fasthtml.common import *
+import re
 from .base_results import BaseResultsHandler
-from .components import create_tab_navigation, create_tab_switching_script, create_copy_button
+from .components import create_tab_navigation, create_copy_button, create_tab_switching_script
 
 class YoutubeScriptResultsHandler(BaseResultsHandler):
-    """Handler for YouTube script tool results."""
-    
+    """Handler for YouTube script tool results using structured data."""
+
+    def __init__(self, tool_id, tool, results):
+        """Initialize using structured results."""
+        super().__init__(tool_id, tool, results)
+        # Extract structured data provided by the factory
+        self.script_content = results.get("script", "Script not generated.")
+        self.hooks_list = results.get("hooks", [])
+        self.bias_list = results.get("input_bias", [])
+        self.questions_list = results.get("open_loop_questions", [])
+        # 'titles' is the formatted string list for copy-all
+        self.all_content_text = "\n".join(self.titles)
+        self.active_tab_id = "script" # Default active tab
+
+    def _create_list_section(self, title, items, item_prefix, section_id_prefix):
+        """Helper to create a list section with copy buttons."""
+        if not items:
+            return P(f"No {title.lower()} generated.", cls="text-gray-500")
+
+        item_elements = []
+        for i, item in enumerate(items):
+            item_text = re.sub(r'^\d+\.\s*', '', item).strip() # Clean numbering
+            item_id_target = f"{section_id_prefix}-content-{i}"
+            item_elements.append(
+                Div(
+                    P(f"{item_prefix}{item_text}", cls="mb-2 whitespace-pre-wrap text-sm"),
+                    # Copy button component
+                    create_copy_button(text_id=item_id_target),
+                    Div(item_text, id=item_id_target, cls="hidden"), # Hidden source
+                    cls="p-3 bg-white rounded shadow-sm border border-gray-200"
+                )
+            )
+        return Div(
+             H3(title, cls="text-lg font-semibold mb-3 text-center"),
+             Div(*item_elements, cls="space-y-3") # Add spacing between items
+        )
+
+
     def create_script_view(self):
-        """Create the script view."""
-        # Extract the script from the titles
-        script_text = ""
-        script_started = False
-        
-        for line in self.titles:
-            if line.strip() == "SCRIPT:":
-                script_started = True
-                continue
-            elif line.strip() in ["HOOKS:", "INPUT BIAS:", "OPEN LOOP QUESTIONS:"]:
-                script_started = False
-            
-            if script_started and line.strip():
-                script_text += line + "\n"
-        
+        """Create the main script view."""
+        view_id = "script-view"
+        classes = "mb-6"
+        if self.active_tab_id != "script":
+            classes += " hidden"
+
         return Div(
             H3("Your YouTube Script", cls="text-xl font-bold mb-4 text-center"),
+            # Display the script content
             Div(
-                P(script_text, cls="whitespace-pre-wrap"),
-                cls="p-4 bg-white rounded shadow-md mb-6 overflow-auto max-h-80"
+                P(self.script_content, cls="whitespace-pre-wrap leading-relaxed"),
+                cls="p-4 bg-gray-50 rounded border border-gray-200 mb-4",
+                id="script-content-display" # ID for the display element
             ),
-            create_copy_button("script-content", "copy-script-btn", "script-copy-status"),
-            Textarea(
-                script_text,
-                id="script-content",
-                cls="hidden"
+            # Copy button for the script
+            Button(
+                "Copy Script", type="button",
+                cls="copy-button bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2",
+                # Target the hidden div containing the raw script text
+                **{'data-copy-target': 'script-content-source'}
             ),
-            id="script-view",
-            cls="mb-6"
+            P("", cls="copy-status text-green-600 inline-block"),
+            # Hidden div containing the raw script text for copying
+            Div(self.script_content, id="script-content-source", cls="hidden"),
+            id=view_id,
+            cls=classes
         )
-    
+
     def create_hooks_view(self):
         """Create the hooks view."""
-        # Extract hooks from the titles
-        hooks = []
-        hooks_started = False
-        
-        for line in self.titles:
-            if line.strip() == "HOOKS:":
-                hooks_started = True
-                continue
-            elif line.strip() in ["SCRIPT:", "INPUT BIAS:", "OPEN LOOP QUESTIONS:"]:
-                hooks_started = False
-            
-            if hooks_started and line.strip():
-                hooks.append(line)
-        
-        hook_items = []
-        for i, hook in enumerate(hooks):
-            # Remove numbering if present
-            hook_text = re.sub(r'^\d+\.\s*', '', hook)
-            
-            hook_items.append(
-                Div(
-                    P(hook_text, cls="mb-2"),
-                    Button(
-                        "Copy",
-                        type="button",
-                        id=f"hook-copy-btn-{i}",
-                        cls="text-sm bg-gray-200 hover:bg-gray-300 text-gray-800 py-1 px-2 rounded"
-                    ),
-                    cls="p-4 bg-white rounded shadow-sm mb-3 hover:shadow-md transition-shadow"
-                )
-            )
-        
+        view_id = "hooks-view"
+        classes = "mb-6"
+        if self.active_tab_id != "hooks":
+             classes += " hidden"
+
         return Div(
-            H3("Hooks for Your Video", cls="text-xl font-bold mb-4 text-center"),
-            P("Use these hooks to grab your viewers' attention:", cls="mb-4 text-center text-gray-600"),
-            *hook_items,
-            id="hooks-view",
-            cls="mb-6 hidden"
+            self._create_list_section("Compelling Hooks", self.hooks_list, "Hook: ", "hook"),
+            id=view_id,
+            cls=classes
         )
-    
+
     def create_bias_view(self):
         """Create the input bias view."""
-        # Extract input bias from the titles
-        bias_statements = []
-        bias_started = False
-        
-        for line in self.titles:
-            if line.strip() == "INPUT BIAS:":
-                bias_started = True
-                continue
-            elif line.strip() in ["SCRIPT:", "HOOKS:", "OPEN LOOP QUESTIONS:"]:
-                bias_started = False
-            
-            if bias_started and line.strip():
-                bias_statements.append(line)
-        
-        bias_items = []
-        for i, bias in enumerate(bias_statements):
-            # Remove numbering if present
-            bias_text = re.sub(r'^\d+\.\s*', '', bias)
-            
-            bias_items.append(
-                Div(
-                    P(bias_text, cls="mb-2"),
-                    Button(
-                        "Copy",
-                        type="button",
-                        id=f"bias-copy-btn-{i}",
-                        cls="text-sm bg-gray-200 hover:bg-gray-300 text-gray-800 py-1 px-2 rounded"
-                    ),
-                    cls="p-4 bg-white rounded shadow-sm mb-3 hover:shadow-md transition-shadow"
-                )
-            )
-        
+        view_id = "bias-view"
+        classes = "mb-6"
+        if self.active_tab_id != "bias":
+             classes += " hidden"
+
         return Div(
-            H3("Input Bias Statements", cls="text-xl font-bold mb-4 text-center"),
-            P("Use these statements to establish credibility:", cls="mb-4 text-center text-gray-600"),
-            *bias_items,
-            id="bias-view",
-            cls="mb-6 hidden"
+            self._create_list_section("Input Bias Statements", self.bias_list, "Bias: ", "bias"),
+            id=view_id,
+            cls=classes
         )
-    
+
     def create_questions_view(self):
         """Create the open loop questions view."""
-        # Extract questions from the titles
-        questions = []
-        questions_started = False
-        
-        for line in self.titles:
-            if line.strip() == "OPEN LOOP QUESTIONS:":
-                questions_started = True
-                continue
-            elif line.strip() in ["SCRIPT:", "HOOKS:", "INPUT BIAS:"]:
-                questions_started = False
-            
-            if questions_started and line.strip():
-                questions.append(line)
-        
-        question_items = []
-        for i, question in enumerate(questions):
-            # Remove numbering if present
-            question_text = re.sub(r'^\d+\.\s*', '', question)
-            
-            question_items.append(
-                Div(
-                    P(question_text, cls="mb-2"),
-                    Button(
-                        "Copy",
-                        type="button",
-                        id=f"question-copy-btn-{i}",
-                        cls="text-sm bg-gray-200 hover:bg-gray-300 text-gray-800 py-1 px-2 rounded"
-                    ),
-                    cls="p-4 bg-white rounded shadow-sm mb-3 hover:shadow-md transition-shadow"
-                )
-            )
-        
+        view_id = "questions-view"
+        classes = "mb-6"
+        if self.active_tab_id != "questions":
+             classes += " hidden"
+
         return Div(
-            H3("Open Loop Questions", cls="text-xl font-bold mb-4 text-center"),
-            P("Use these questions to create curiosity:", cls="mb-4 text-center text-gray-600"),
-            *question_items,
-            id="questions-view",
-            cls="mb-6 hidden"
+            self._create_list_section("Open Loop Questions", self.questions_list, "Q: ", "question"),
+            id=view_id,
+            cls=classes
         )
-    
+
     def create_copy_all_view(self):
-        """Create the copy-all view."""
+        """Create the copy-all view using formatted 'titles'."""
+        view_id = "copy-view"
+        classes = "mb-6"
+        if self.active_tab_id != "copy":
+            classes += " hidden"
+
         return Div(
-            H3("Complete Output", cls="text-xl font-bold mb-4 text-center"),
+            H3("Complete Output (Formatted Text)", cls="text-lg font-semibold mb-3"),
             Textarea(
-                "\n".join(self.titles),
-                id="copy-all-content",
-                rows=15,
+                self.all_content_text,
+                id="copy-all-script-textarea", # Unique ID
+                rows=20, # Make it taller for scripts
                 readonly=True,
-                cls="w-full p-3 border rounded font-mono"
+                cls="w-full p-3 border rounded font-mono text-sm bg-gray-50"
             ),
-            create_copy_button("copy-all-content", "copy-all-btn", "copy-all-status"),
-            id="copy-view",
-            cls="mb-6 hidden"
+            Button(
+                "Copy All Formatted Text", type="button",
+                cls="copy-button bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-2 mr-2",
+                **{'data-copy-target': 'copy-all-script-textarea', 'data-copy-type': 'textarea'}
+            ),
+            P("", cls="copy-status text-green-600 inline-block"),
+            id=view_id,
+            cls=classes
         )
-    
+
     def create_views(self):
         """Create all views for the YouTube script results."""
-        views = {
-            "script": self.create_script_view(),
-            "hooks": self.create_hooks_view(),
-            "bias": self.create_bias_view(),
-            "questions": self.create_questions_view(),
-            "copy": self.create_copy_all_view()
-        }
-        
-        return Div(*views.values())
-    
+        return Div(
+            self.create_script_view(),
+            self.create_hooks_view(),
+            self.create_bias_view(),
+            self.create_questions_view(),
+            self.create_copy_all_view()
+        )
+
     def create_tabs(self):
         """Create tabs for the YouTube script results."""
-        tabs = [
-            {"id": "script", "label": "Script", "selected": True},
-            {"id": "hooks", "label": "Hooks", "selected": False},
-            {"id": "bias", "label": "Input Bias", "selected": False},
-            {"id": "questions", "label": "Questions", "selected": False},
-            {"id": "copy", "label": "Copy All", "selected": False}
+        tabs_config = [
+            {"id": "script", "label": "Script", "selected": self.active_tab_id == "script"},
+            {"id": "hooks", "label": "Hooks", "selected": self.active_tab_id == "hooks"},
+            {"id": "bias", "label": "Input Bias", "selected": self.active_tab_id == "bias"},
+            {"id": "questions", "label": "Questions", "selected": self.active_tab_id == "questions"},
+            {"id": "copy", "label": "Copy Formatted", "selected": self.active_tab_id == "copy"}
         ]
-        
-        return create_tab_navigation(tabs)
-    
-    def create_scripts(self):
-        """Create scripts for the YouTube script results."""
-        return Script("""
-            document.addEventListener('DOMContentLoaded', function() {
-                // Tab switching functionality
-                window.switchTab = function(tabId) {
-                    // Hide all views
-                    const views = document.querySelectorAll('[id$="-view"]');
-                    views.forEach(view => {
-                        view.classList.add('hidden');
-                    });
-                    
-                    // Show selected view
-                    const selectedView = document.getElementById(tabId + '-view');
-                    if (selectedView) {
-                        selectedView.classList.remove('hidden');
-                    }
-                    
-                    // Update tab buttons
-                    const tabs = document.querySelectorAll('[id^="tab-"]');
-                    tabs.forEach(tab => {
-                        tab.classList.remove('bg-white', 'text-blue-600', 'font-bold');
-                        tab.classList.add('bg-gray-200', 'text-gray-700');
-                    });
-                    
-                    const selectedTab = document.getElementById('tab-' + tabId);
-                    if (selectedTab) {
-                        selectedTab.classList.remove('bg-gray-200', 'text-gray-700');
-                        selectedTab.classList.add('bg-white', 'text-blue-600', 'font-bold');
-                    }
-                };
+        return create_tab_navigation(tabs_config)
 
-                // Setup copy buttons for script
-                const copyScriptBtn = document.getElementById('copy-script-btn');
-                const scriptCopyStatus = document.getElementById('script-copy-status');
-                const scriptContent = document.getElementById('script-content');
-                
-                if (copyScriptBtn && scriptContent) {
-                    copyScriptBtn.addEventListener('click', function() {
-                        navigator.clipboard.writeText(scriptContent.value)
-                            .then(() => {
-                                scriptCopyStatus.textContent = 'Copied!';
-                                setTimeout(() => {
-                                    scriptCopyStatus.textContent = '';
-                                }, 2000);
-                            })
-                            .catch(err => {
-                                scriptCopyStatus.textContent = 'Failed to copy';
-                                console.error('Failed to copy text: ', err);
-                            });
-                    });
-                }
-                
-                // Setup copy buttons for hooks
-                document.querySelectorAll('[id^="hook-copy-btn-"]').forEach(button => {
-                    button.addEventListener('click', function() {
-                        const text = button.previousElementSibling.textContent;
-                        
-                        navigator.clipboard.writeText(text)
-                            .then(() => {
-                                button.textContent = 'Copied!';
-                                setTimeout(() => {
-                                    button.textContent = 'Copy';
-                                }, 2000);
-                            })
-                            .catch(err => {
-                                console.error('Failed to copy text: ', err);
-                            });
-                    });
-                });
-                
-                // Setup copy buttons for bias statements
-                document.querySelectorAll('[id^="bias-copy-btn-"]').forEach(button => {
-                    button.addEventListener('click', function() {
-                        const text = button.previousElementSibling.textContent;
-                        
-                        navigator.clipboard.writeText(text)
-                            .then(() => {
-                                button.textContent = 'Copied!';
-                                setTimeout(() => {
-                                    button.textContent = 'Copy';
-                                }, 2000);
-                            })
-                            .catch(err => {
-                                console.error('Failed to copy text: ', err);
-                            });
-                    });
-                });
-                
-                // Setup copy buttons for questions
-                document.querySelectorAll('[id^="question-copy-btn-"]').forEach(button => {
-                    button.addEventListener('click', function() {
-                        const text = button.previousElementSibling.textContent;
-                        
-                        navigator.clipboard.writeText(text)
-                            .then(() => {
-                                button.textContent = 'Copied!';
-                                setTimeout(() => {
-                                    button.textContent = 'Copy';
-                                }, 2000);
-                            })
-                            .catch(err => {
-                                console.error('Failed to copy text: ', err);
-                            });
-                    });
-                });
-                
-                // Setup copy-all button
-                const copyAllBtn = document.getElementById('copy-all-btn');
-                const copyAllStatus = document.getElementById('copy-all-status');
-                const copyAllContent = document.getElementById('copy-all-content');
-                
-                if (copyAllBtn && copyAllContent) {
-                    copyAllBtn.addEventListener('click', function() {
-                        navigator.clipboard.writeText(copyAllContent.value)
-                            .then(() => {
-                                copyAllStatus.textContent = 'Copied!';
-                                setTimeout(() => {
-                                    copyAllStatus.textContent = '';
-                                }, 2000);
-                            })
-                            .catch(err => {
-                                copyAllStatus.textContent = 'Failed to copy';
-                                console.error('Failed to copy text: ', err);
-                            });
-                    });
-                }
-            });
-        """)
-    
     def render(self):
         """Render the YouTube script results page."""
         return Div(
-            # Page header
-            H1(f"{self.tool.name} Results",
-               cls="text-3xl font-bold text-gray-800 mb-2 text-center"),
-
-            P("Here is your generated YouTube script content:",
-              cls="text-xl text-gray-600 mb-8 text-center"),
-
-            # Results section
+            H1(f"{self.tool.name} Results", cls="text-3xl font-bold text-gray-800 mb-2 text-center"),
+            P("Here is your generated YouTube script content:", cls="text-xl text-gray-600 mb-8 text-center"),
             Div(
-                # Summary of request
                 self.create_metadata_section(),
-
-                # Tabs for different views
                 self.create_tabs(),
-
-                # Different views
                 self.create_views(),
-
-                # Navigation buttons
                 self.create_navigation_buttons(),
-
-                # Scripts
-                self.create_scripts(),
-                
-                # Base scripts
-                self.get_page_scripts(),
-
-                cls="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md"
+                create_tab_switching_script(), # Link the main JS file
+                cls="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md border border-gray-200", # Wider
+                id="results-container" # Crucial ID for JS targeting
             )
         )

@@ -2,6 +2,7 @@ import re
 from typing import List, Dict, Any
 from ..core.factory import create_text_generation_tool
 from ..core.registry import registry
+from .models import BlogOutline
 import logging
 
 # Set up logging
@@ -19,7 +20,12 @@ You are a professional blog outline generator. Create well-structured, comprehen
 6. Include suggestions for key points to cover in each section
 7. Provide a mix of informational and engaging sections
 
-Your outlines should be comprehensive enough to guide the writing process while allowing for creativity and expansion.
+Return your outline in a structured format with:
+- An introduction section with title and bullet points
+- Main sections, each with title, bullet points, and potential subsections
+- A conclusion section with title and bullet points
+
+Every section should have a descriptive title and a list of key points to cover.
 """
 
 # User prompt template for blog outline generation
@@ -29,25 +35,15 @@ Create a detailed blog post outline for a {word_count}-word article about: {topi
 Target audience: {target_audience}
 Purpose: {tone}
 
-Include an introduction, main sections with subsections, and a conclusion. For each section, provide brief notes on what to cover.
+Return a structured outline with:
+1. Introduction section
+2. Main content sections (with any subsections)
+3. Conclusion section
+
+For each section and subsection, include:
+- A descriptive title
+- 3-5 bullet points on what to cover
 """
-
-# Post-processing function for blog outlines
-def process_blog_outline(text: str) -> List[str]:
-    # Log the received text for debugging
-    logger.info(f"Processing blog outline text (length: {len(text)})")
-    logger.info(f"Text sample: {text[:200]}...")
-
-    # Remove common introductory phrases
-    text = re.sub(r'^.*?(?:here\'s|here is).*?outline.*?:\s*\n*', '', text, flags=re.IGNORECASE | re.MULTILINE)
-
-    # Split by lines and clean
-    lines = [line.strip() for line in text.split('\n') if line.strip()]
-
-    logger.info(f"Processed into {len(lines)} lines")
-
-    # Process the outline
-    return lines
 
 # Define custom tips and benefits for the blog outline generator
 blog_outline_tips = [
@@ -121,7 +117,7 @@ BlogOutlineGeneratorClass = create_text_generation_tool(
             ]
         }
     },
-    post_process_func=process_blog_outline
+    response_model=BlogOutline
 )
 
 # Add custom tips and benefits

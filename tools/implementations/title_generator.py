@@ -2,6 +2,7 @@ import re
 from typing import List, Dict, Any
 from ..core.factory import create_text_generation_tool
 from ..core.registry import registry
+from .models import GeneratedTitles
 
 # System prompt for title generation
 title_system_prompt = """
@@ -51,35 +52,15 @@ Detailed Guidelines:
    - Use ALL CAPS for emphasis
    - Break long ideas into short, punchy phrases
 
-Apply these principles and guidelines to create engaging, platform-appropriate titles.
+Return exactly 10 titles in a structured format as specified.
 """
 
 # User prompt template for title generation
 title_user_prompt_template = """
-Create 10 engaging {platform} titles for content about: {topic}. Tone: {style}. Make them catchy and platform-appropriate. Don't include 'sure' or numbering. Apply the principles and guidelines provided in the system prompt. Please only include the titles and nothing else
+Create 10 engaging {platform} titles for content about: {topic}. Tone: {style}. Make them catchy and platform-appropriate. Don't include 'sure' or numbering. Apply the principles and guidelines provided in the system prompt.
+
+Return your results as a structured list of 10 titles, without any numbering or additional commentary.
 """
-
-# Post-processing function for titles
-def process_titles(text: str) -> List[str]:
-    # Remove common introductory phrases
-    text = re.sub(r'^.*?(?:here are|here\'s)\s+\d+.*?:\s*\n*', '', text, flags=re.IGNORECASE | re.MULTILINE)
-
-    # Split and clean titles
-    titles = []
-    lines = [line.strip() for line in text.split('\n') if line.strip()]
-
-    for line in lines:
-        # Remove any numbering (1., 2., etc) or bullet points
-        cleaned_line = re.sub(r'^\d+\.\s*|\*\s*|\-\s*', '', line)
-        if cleaned_line:
-            titles.append(cleaned_line)
-
-    # Remove duplicates while preserving order
-    seen = set()
-    unique_titles = [t for t in titles if not (t in seen or seen.add(t))]
-
-    # Return at most 10 titles
-    return unique_titles[:10]
 
 # Define custom tips and benefits for the title generator
 title_tips = [
@@ -134,7 +115,7 @@ TitleGeneratorClass = create_text_generation_tool(
             ]
         }
     },
-    post_process_func=process_titles
+    response_model=GeneratedTitles
 )
 
 # Add custom tips and benefits

@@ -2,6 +2,7 @@ import re
 from typing import List, Dict, Any
 from ..core.factory import create_text_generation_tool
 from ..core.registry import registry
+from .models import ThumbnailIdeas
 
 # System prompt for thumbnail idea generation
 thumbnail_system_prompt = """
@@ -51,43 +52,21 @@ Detailed Guidelines:
    - Use ALL CAPS for emphasis
    - Break long ideas into short, punchy phrases
 
-Apply these principles and guidelines to create engaging, YouTube Thumbnails.
+Return your results in a structured format with 5 unique thumbnail ideas, each with background, main image, text, and additional elements.
 """
 
 # User prompt template for thumbnail idea generation
 thumbnail_user_prompt_template = """
 Generate 5 unique thumbnail ideas for a YouTube video about: {topic}.
-Each idea should follow this format:
 
-Thumbnail Idea [number]:
-
-Background: [Describe the background style and colors]
-Main Image: [Describe the central image or graphic]
-Text: [Provide the main text or headline please make it short and engaging, use CAPS for emphasis]
-Additional Elements: [Describe any icons, graphics, or additional visual elements]
+For each idea, provide:
+- Background: Describe the background style and colors
+- Main Image: Describe the central image or graphic
+- Text: Provide the main text or headline (short and engaging, use CAPS for emphasis)
+- Additional Elements: Describe any icons, graphics, or additional visual elements
 
 Make the ideas diverse, engaging, and tailored to attract clicks on YouTube. Ensure each idea is distinct and creative.
 """
-
-# Post-processing function for thumbnail ideas
-def process_thumbnail_ideas(text: str) -> List[str]:
-    # Remove common introductory phrases
-    text = re.sub(r'^.*?(?:here are|here\'s)\s+\d+.*?:\s*\n*', '', text, flags=re.IGNORECASE | re.MULTILINE)
-    
-    # Split by "Thumbnail Idea" or numbered sections
-    ideas = re.split(r'Thumbnail Idea \d+:|^\d+\.', text, flags=re.MULTILINE)
-    
-    # Clean up the ideas
-    cleaned_ideas = []
-    for idea in ideas:
-        idea = idea.strip()
-        if idea:
-            # Remove any bullet points or dashes at the beginning
-            idea = re.sub(r'^\s*[\*\-]\s*', '', idea)
-            cleaned_ideas.append(idea)
-    
-    # Return at most 5 ideas
-    return cleaned_ideas[:5]
 
 # Define custom tips and benefits for the thumbnail generator
 thumbnail_tips = [
@@ -125,7 +104,7 @@ ThumbnailGeneratorClass = create_text_generation_tool(
             "rows": 3
         }
     },
-    post_process_func=process_thumbnail_ideas
+    response_model=ThumbnailIdeas
 )
 
 # Add custom tips and benefits

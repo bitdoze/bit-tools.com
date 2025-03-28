@@ -22,8 +22,8 @@ class TextGenerationTool(BaseTool, ABC):
         return self.default_system_prompt
     
     @abstractmethod
-    async def generate_text(self, inputs: Dict[str, Any]) -> List[str]:
-        """Generate text based on inputs."""
+    async def generate_text(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate text based on inputs and return a dictionary with results."""
         pass
     
     async def process(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
@@ -34,17 +34,42 @@ class TextGenerationTool(BaseTool, ABC):
             if validation_errors:
                 return {"error": "Validation failed", "validation_errors": validation_errors}
             
-            # Generate text
-            generated_texts = await self.generate_text(inputs)
+            # Generate text and get results
+            results = await self.generate_text(inputs)
             
-            # Return results
-            return {
-                "metadata": {
-                    **{k: v for k, v in inputs.items() if k in self.input_form_fields},
-                    "count": len(generated_texts)
-                },
-                "titles": generated_texts  # Using 'titles' for backward compatibility
-            }
+            # If there's an error in the results, return it directly
+            if "error" in results:
+                return results
+            
+            # Make sure metadata is included
+            if "metadata" not in results:
+                results["metadata"] = {
+                    **{k: v for k, v in inputs.items() if k in self.input_form_fields}
+                }
+                
+            # Make sure titles is included for backward compatibility
+            if "titles" not in results and "error" not in results:
+                # Try to find some content to use as titles
+                if "content" in results:
+                    results["titles"] = [results["content"]]
+                else:
+                    # Look for any list in the results to use
+                    for key, value in results.items():
+                        if isinstance(value, list) and value and key != "metadata":
+                            results["titles"] = value
+                            break
+                    
+                    # If still no titles, use a default
+                    if "titles" not in results:
+                        results["titles"] = ["Content generated successfully"]
+            
+            # Add count to metadata if not present
+            if "metadata" in results and "count" not in results["metadata"]:
+                if "titles" in results and isinstance(results["titles"], list):
+                    results["metadata"]["count"] = len(results["titles"])
+            
+            return results
+            
         except Exception as e:
             return {"error": f"Failed to generate text: {str(e)}"}
 

@@ -1,143 +1,66 @@
+# pages/tool_pages/results/transformation_results.py
 from fasthtml.common import *
 import json
 from .base_results import BaseResultsHandler
-from .components import create_copy_button, create_copy_script
+from .components import create_copy_button, create_tab_switching_script # Import script link
 
 class TransformationResultsHandler(BaseResultsHandler):
-    """Handler for transformation tool results."""
-    
+    """Handler for transformation tool results (e.g., rephrasing)."""
+
     def __init__(self, tool_id, tool, results):
         """Initialize the transformation results handler."""
         super().__init__(tool_id, tool, results)
-        self.original_text = results.get("original_text", "")
-        self.transformed_text = results.get("transformed_text", "")
-    
+        self.original_text = results.get("original_text", "Original text not provided.")
+        self.transformed_text = results.get("transformed_text", "Transformation failed or no text generated.")
+
     def create_before_after_view(self):
         """Create the before/after view for transformation results."""
+        # No tabs needed, so this is the main content view
         return Div(
-            # Original and transformed text
+            # Original Text Section
             Div(
-                H3("Original Text", cls="text-lg font-bold mb-2"),
+                H3("Original Text", cls="text-lg font-bold mb-2 text-gray-700"),
                 Div(
-                    P(self.original_text, cls="whitespace-pre-wrap"),
-                    cls="p-4 bg-gray-100 rounded mb-6 overflow-auto max-h-60"
-                ),
-                H3("Transformed Text", cls="text-lg font-bold mb-2"),
-                Div(
-                    P(self.transformed_text, cls="whitespace-pre-wrap"),
-                    cls="p-4 bg-blue-50 rounded mb-6 overflow-auto max-h-60"
-                ),
-                Div(
-                    Button(
-                        "Copy Transformed Text",
-                        type="button",
-                        id="copy-transformed-btn",
-                        cls="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2"
-                    ),
-                    P("", id="copy-status", cls="text-green-600 inline-block"),
-                    cls="flex items-center"
+                    P(self.original_text, cls="whitespace-pre-wrap text-sm leading-relaxed"),
+                    cls="p-4 bg-gray-100 rounded border border-gray-200 mb-6 max-h-72 overflow-y-auto" # Scrollable
                 ),
                 cls="mb-6"
             ),
-            
-            # Include the script directly in the page for now
-            Script("""
-                document.addEventListener('DOMContentLoaded', function() {
-                    // Copy functionality for transformed text
-                    const copyBtn = document.getElementById('copy-transformed-btn');
-                    const statusEl = document.getElementById('copy-status');
-                    const transformedTextEl = document.querySelector('.bg-blue-50 p');
-                    
-                    if (copyBtn && transformedTextEl) {
-                        copyBtn.addEventListener('click', function() {
-                            const text = transformedTextEl.textContent;
-                            
-                            navigator.clipboard.writeText(text)
-                                .then(() => {
-                                    statusEl.textContent = 'Copied!';
-                                    setTimeout(() => {
-                                        statusEl.textContent = '';
-                                    }, 2000);
-                                })
-                                .catch(err => {
-                                    statusEl.textContent = 'Failed to copy';
-                                    console.error('Failed to copy text: ', err);
-                                });
-                        });
-                    }
-
-                    // Hide any loading overlays
-                    const loadingOverlay = document.getElementById('loading-overlay');
-                    if (loadingOverlay) {
-                        loadingOverlay.classList.add('hidden');
-                    }
-
-                    // Reset any disabled submit buttons
-                    const submitButton = document.getElementById('submit-button');
-                    if (submitButton) {
-                        submitButton.disabled = false;
-                    }
-                });
-                
-                // Add event listener for browser navigation events (back/forward buttons)
-                window.addEventListener('popstate', function() {
-                    // Hide any loading overlays when navigating with browser controls
-                    const loadingOverlay = document.getElementById('loading-overlay');
-                    if (loadingOverlay) {
-                        loadingOverlay.classList.add('hidden');
-                    }
-
-                    // Reset any disabled submit buttons
-                    const submitButton = document.getElementById('submit-button');
-                    if (submitButton) {
-                        submitButton.disabled = false;
-                    }
-                });
-                
-                // Force hide loading overlay on page load and back button
-                // This ensures the loading overlay is hidden even if the popstate event doesn't fire properly
-                document.addEventListener('visibilitychange', function() {
-                    if (!document.hidden) {
-                        // Page is now visible (e.g., after returning from another tab or using back button)
-                        const loadingOverlay = document.getElementById('loading-overlay');
-                        if (loadingOverlay) {
-                            loadingOverlay.classList.add('hidden');
-                        }
-
-                        // Reset any disabled submit buttons
-                        const submitButton = document.getElementById('submit-button');
-                        if (submitButton) {
-                            submitButton.disabled = false;
-                        }
-                    }
-                });
-            """)
+            # Transformed Text Section
+            Div(
+                H3("Transformed Text", cls="text-lg font-bold mb-2 text-blue-700"),
+                Div(
+                    P(self.transformed_text, cls="whitespace-pre-wrap text-sm leading-relaxed"),
+                    # Add an ID to the container div for easier targeting if needed
+                    id="transformed-text-content-display",
+                    cls="p-4 bg-blue-50 rounded border border-blue-200 mb-4 max-h-72 overflow-y-auto" # Scrollable
+                ),
+                # Copy button targeting the hidden source div
+                Button(
+                    "Copy Transformed Text", type="button",
+                    cls="copy-button bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2",
+                    **{'data-copy-target': 'transformed-text-content-source'}
+                ),
+                P("", cls="copy-status text-green-600 inline-block"),
+                # Hidden div containing the raw transformed text for copying
+                Div(self.transformed_text, id="transformed-text-content-source", cls="hidden"),
+                cls="mb-6"
+            ),
         )
-    
+
     def render(self):
         """Render the transformation results page."""
+        # Transformation results don't typically have tabs
         return Div(
-            # Page header
-            H1(f"{self.tool.name} Results",
-               cls="text-3xl font-bold text-gray-800 mb-2 text-center"),
-
-            P("Here is your transformed text:",
-              cls="text-xl text-gray-600 mb-8 text-center"),
-
-            # Results section
+            H1(f"{self.tool.name} Results", cls="text-3xl font-bold text-gray-800 mb-2 text-center"),
+            P("Here is your transformed text:", cls="text-xl text-gray-600 mb-8 text-center"),
             Div(
-                # Summary of request
                 self.create_metadata_section(),
-
-                # Before/after view
+                # No Tabs needed for simple before/after
                 self.create_before_after_view(),
-
-                # Navigation buttons
                 self.create_navigation_buttons(),
-
-                # Page scripts
-                self.get_page_scripts(),
-
-                cls="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md"
+                create_tab_switching_script(), # Link the main JS file for copy button
+                cls="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-md border border-gray-200", # Increased width slightly
+                id="results-container" # Crucial ID for JS targeting
             )
         )

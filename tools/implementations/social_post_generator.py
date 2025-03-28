@@ -3,6 +3,7 @@ import logging
 from typing import List, Dict, Any
 from ..core.factory import create_text_generation_tool
 from ..core.registry import registry
+from .models import SocialPostList
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -85,47 +86,15 @@ For Reddit:
 - Be authentic and direct
 - Follow subreddit conventions
 
-Apply these principles and guidelines to create engaging, platform-appropriate posts.
+Return your results as a structured list of 10 posts with each post as a separate element.
 """
 
 # User prompt template for social post generation
 social_user_prompt_template = """
-Create 10 engaging {platform} posts for content about: {topic}. Tone: {tone}. Make them platform-appropriate. Don't include 'sure' or numbering. Apply the principles and guidelines provided in the system prompt. Please only include the posts and nothing else
+Create 10 engaging {platform} posts for content about: {topic}. Tone: {tone}. Make them platform-appropriate.
+
+Please return a list of 10 unique posts following the guidelines in the system prompt. Each post should be complete and ready to publish.
 """
-
-# Post-processing function for social posts
-def process_social_posts(text: str) -> List[str]:
-    # Log the received text for debugging
-    logger.info(f"Processing social post text (length: {len(text)})")
-    logger.info(f"Text sample: {text[:200]}...")
-
-    # Remove common introductory phrases
-    text = re.sub(r'^.*?(?:here are|here\'s)\s+\d+.*?:\s*\n*', '', text, flags=re.IGNORECASE | re.MULTILINE)
-    text = re.sub(r'Okay,?\s*', '', text, flags=re.IGNORECASE)
-
-    # Split and clean posts
-    posts = []
-    lines = [line.strip() for line in text.split('\n\n') if line.strip()]
-
-    if len(lines) <= 1:  # If splitting by double newline doesn't work, try single newline
-        lines = [line.strip() for line in text.split('\n') if line.strip()]
-
-    logger.info(f"Split into {len(lines)} lines/paragraphs")
-
-    for line in lines:
-        # Remove any numbering (1., 2., etc) or bullet points
-        cleaned_line = re.sub(r'^\d+\.\s*|\*\s*|\-\s*', '', line)
-        if cleaned_line:
-            posts.append(cleaned_line)
-
-    # Remove duplicates while preserving order
-    seen = set()
-    unique_posts = [p for p in posts if not (p in seen or seen.add(p))]
-
-    logger.info(f"Processed into {len(unique_posts)} unique posts (returning max 10)")
-
-    # Return at most 10 posts
-    return unique_posts[:10]
 
 # Define custom tips and benefits for the social post generator
 social_post_tips = [
@@ -186,7 +155,7 @@ SocialPostGeneratorClass = create_text_generation_tool(
             ]
         }
     },
-    post_process_func=process_social_posts
+    response_model=SocialPostList
 )
 
 # Add custom tips and benefits
