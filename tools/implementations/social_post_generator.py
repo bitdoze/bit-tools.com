@@ -1,3 +1,4 @@
+
 import re
 import logging
 from typing import List, Dict, Any
@@ -86,6 +87,16 @@ For Reddit:
 - Be authentic and direct
 - Follow subreddit conventions
 
+For Quora:
+- Format as comprehensive answers to questions
+- Provide well-structured, authoritative responses
+- Include relevant examples and evidence to support claims
+- Use headings and bullet points for better readability
+- Maintain a helpful, informative tone
+- Address the question directly and completely
+- Cite sources when appropriate
+- Anticipate follow-up questions
+
 Return your results as a structured list of 10 posts with each post as a separate element.
 """
 
@@ -103,7 +114,8 @@ social_post_tips = [
     "Include a call-to-action in your posts to boost engagement",
     "Use emojis strategically to add personality to your posts",
     "Tailor your content to each platform's unique audience",
-    "Post at optimal times for your target audience"
+    "Post at optimal times for your target audience",
+    "For Quora, focus on providing comprehensive, authoritative answers"
 ]
 
 social_post_benefits = [
@@ -117,7 +129,7 @@ social_post_benefits = [
 # Create the social post generator tool
 SocialPostGeneratorClass = create_text_generation_tool(
     name="Social Media Post Generator",
-    description="Create engaging social media posts for Twitter, Bluesky, Facebook, or Reddit in various tones.",
+    description="Create engaging social media posts for Twitter, Bluesky, Facebook, Reddit, or Quora in various tones.",
     icon="""<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z" />
     </svg>""",
@@ -138,7 +150,8 @@ SocialPostGeneratorClass = create_text_generation_tool(
                 {"value": "Twitter", "label": "Twitter", "selected": True},
                 {"value": "Bluesky", "label": "Bluesky"},
                 {"value": "Facebook", "label": "Facebook"},
-                {"value": "Reddit", "label": "Reddit"}
+                {"value": "Reddit", "label": "Reddit"},
+                {"value": "Quora", "label": "Quora"}
             ]
         },
         "tone": {

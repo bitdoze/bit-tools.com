@@ -14,13 +14,58 @@ class OutlineResultsHandler(BaseResultsHandler):
         super().__init__(tool_id, tool, results)
         self.active_tab_id = "list" # Default active tab
 
-        # Use 'titles' from base class (which is prepared by the factory)
-        self.outline_lines = self.titles
+        # Check if we have structured outline data
+        if "introduction" in results and "main_sections" in results and "conclusion" in results:
+            # Process the structured outline data
+            self.outline_lines = self._process_structured_outline(results)
+        else:
+            # Use 'titles' from base class (which is prepared by the factory)
+            self.outline_lines = self.titles
 
         # Generate markdown from the potentially structured lines
         self.markdown_text = self._generate_markdown_from_lines(self.outline_lines)
         # Text for copy-all is just the raw lines joined
         self.all_content_text = "\n".join(self.outline_lines)
+
+    def _process_structured_outline(self, results):
+        """Process structured outline data into a list of formatted lines."""
+        lines = []
+
+        # Process introduction
+        if results.get("introduction"):
+            intro = results["introduction"]
+            lines.append(f"# {intro.get('title', 'Introduction')}")
+            for point in intro.get("points", []):
+                lines.append(f"- {point}")
+            lines.append("") # Add a blank line for spacing
+
+        # Process main sections
+        if results.get("main_sections"):
+            lines.append("# Main Sections")
+            lines.append("") # Add a blank line for spacing
+
+            for section in results["main_sections"]:
+                lines.append(f"## {section.get('title', 'Untitled Section')}")
+                for point in section.get("points", []):
+                    lines.append(f"- {point}")
+
+                # Process subsections if any
+                for subsection in section.get("subsections", []):
+                    lines.append(f"### {subsection.get('title', 'Untitled Subsection')}")
+                    for point in subsection.get("points", []):
+                        lines.append(f"- {point}")
+                    lines.append("") # Add a blank line for spacing
+
+                lines.append("") # Add a blank line for spacing
+
+        # Process conclusion
+        if results.get("conclusion"):
+            conclusion = results["conclusion"]
+            lines.append(f"# {conclusion.get('title', 'Conclusion')}")
+            for point in conclusion.get("points", []):
+                lines.append(f"- {point}")
+
+        return lines
 
     def _generate_markdown_from_lines(self, lines):
         """Generate markdown from a list of outline strings, trying to infer structure."""

@@ -84,8 +84,8 @@ class ThumbnailResultsHandler(BaseResultsHandler):
              card_items.append(
                 Div(
                     H4(f"Idea {i+1}", cls="text-md font-bold mb-2 text-center text-blue-700"),
-                    P(f"{idea.get('text', 'N/A')}", cls="text-center text-sm mb-1 font-semibold h-10 overflow-hidden"), # Fixed height for text
-                    P(f"Image: {idea.get('main_image', 'N/A')}", cls="text-center text-xs text-gray-600 mb-3 truncate"), # Truncate long image desc
+                    P(f"{idea.get('text', 'N/A')}", cls="text-center text-sm mb-1 font-semibold max-h-24 overflow-auto whitespace-pre-wrap"), # Scrollable with max height
+                    P(f"Image: {idea.get('main_image', 'N/A')}", cls="text-center text-xs text-gray-600 mb-3 max-h-24 overflow-auto whitespace-pre-wrap"), # Scrollable with max height
                     # Copy button and status (using component)
                     create_copy_button(text_id=idea_id_target),
                     Div(copy_text, id=idea_id_target, cls="hidden"), # Hidden content for copy

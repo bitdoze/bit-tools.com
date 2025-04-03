@@ -69,9 +69,9 @@ class StandardResultsHandler(BaseResultsHandler):
 
             card_items.append(
                 Div(
-                    # Display content (truncated potentially)
-                    P(display_content[:120] + ('...' if len(display_content) > 120 else ''),
-                      cls="text-sm mb-3 h-16 overflow-hidden"), # Fixed height, overflow hidden
+                    # Display full content with scrolling if needed
+                    P(display_content,
+                      cls="text-sm mb-3 max-h-48 overflow-auto whitespace-pre-wrap"), # Scrollable with max height
                     # Copy button and status (using component)
                     create_copy_button(text_id=content_id_target),
                     # Hidden div holding the exact text to copy
